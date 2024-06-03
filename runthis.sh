@@ -1,5 +1,7 @@
 #!/bin/bash
 
-rm *.o test1
-g++ test1.cc -o test1
-./test1
+INPUTFILE=input1.txt
+
+rm *.o iitpave2.out
+make iitpave2
+./iitpave2.out $INPUTFILE
