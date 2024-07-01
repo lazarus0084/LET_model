@@ -6,15 +6,40 @@ int main(int argc,char* argv[])
     vector<Layer> layers;
     vector<Load> loads;
     vector<Point> points;
+    Pave iitpave;
+    
+   
     
     //Read inputs
-    readInputFile(numLayers, numLoads, numPoints, layers, loads, points, argv[1]);
+    readInputFile(numLayers, numLoads, numPoints, layers, loads, points, iitpave, argv[1]);
+    //iitpave object populating functons
+    iitpave.PopulateLayers(layers);
+    iitpave.PopulateLoads(loads);
+    iitpave.PopulatePoints(points);
 
-    //Tests
-    cout << layers[layers.size()-1].PoissonRatio << endl;
-    cout << points[0].x0 << endl;
-    cout << loads[0].radius() << endl;
+    
+    
+    init_LET(iitpave);//filename LET
+  
+    
+ 
 
+    
     return 0;
+    
+ }
+    
+   
+    
 
-}
+    
+
+  
+
+    
+
+    
+ 
+    
+    
+

@@ -1,12 +1,13 @@
 #Makefile for ILLITHERM-FV
 
 PROGRAM = iitpave2
-SOURCE = iitpave2.cc readinputs.cc
-OBJECTS = iitpave2.o readinputs.o
+SOURCE = iitpave2.cc readinputs.cc LET.cc XipWip.cc repamat.cc
+OBJECTS = iitpave2.o readinputs.o LET.o   XipWip.o  repmat.o
 ARCHIVE = iitpave2.tar
 
 CC = g++
 CFLAGS = -g -lm -I.
+
 DEPS = iitpave2.h
 OPTIONS = -std=c++11
 
