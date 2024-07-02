@@ -154,6 +154,93 @@ class Pave{
 
 
 };
+class myfunctions{ //MATLAB functions
+    public :
+// Function overload for int
+MatrixXd repmat(int mat, int rows, int cols) {
+    return MatrixXd::Constant(rows, cols, static_cast<double>(mat));
+}
+
+// Function overload for double
+MatrixXd repmat(double mat, int rows, int cols) {
+    return MatrixXd::Constant(rows, cols, mat);
+}
+
+// Function overload for VectorXd
+MatrixXd repmat(const VectorXd& mat, int rows, int cols) {
+    int size = mat.size();
+    MatrixXd result(size * rows, cols);
+
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            result.block(i * size, j, size, 1) = mat;
+        }
+    }
+
+    return result;
+}
+
+// Function overload for MatrixXd
+MatrixXd repmat(const MatrixXd& mat, int rows, int cols) {
+    int numRows = mat.rows();
+    int numCols = mat.cols();
+    MatrixXd result(numRows * rows, numCols * cols);
+
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            result.block(i * numRows, j * numCols, numRows, numCols) = mat;
+        }
+    }
+
+    return result;
+}
+
+// Function to generate a sequence j:k
+VectorXd LinSeq(int j, int k) {
+    int m = k - j + 1;
+    VectorXd result(m);
+    for (int idx = 0; idx < m; ++idx) {
+        result(idx) = j + idx;
+    }
+    return result;
+}
+
+// Function to generate a sequence j:i:k
+VectorXd LinSeq(int j, int i, int k) {
+    int m = static_cast<int>((k - j) / i) + 1;
+    VectorXd result(m);
+    for (int idx = 0; idx < m; ++idx) {
+        result(idx) = j + idx * i;
+    }
+    return result;
+    
+}
+
+MatrixXd getSubMatrix(const MatrixXd& Mat, const VectorXd& indices) {
+    int numRows = indices.size();
+    int numCols = Mat.cols();
+    MatrixXd submatrix(numRows, numCols);
+    submatrix.setZero();
+
+    VectorXd adjustedIndices = indices.array() - 1; // Adjust indices by subtracting 1
+
+    // Extract rows based on adjustedIndices
+    for (int i = 0; i < numRows; ++i) {
+        int rowIdx = static_cast<int>(adjustedIndices(i));
+        if (rowIdx >= 0 && rowIdx < Mat.rows()) {
+            submatrix.row(i) = Mat.row(rowIdx);
+        } else {
+            cerr << "Row index " << rowIdx << " out of bounds." << endl;
+        }
+    }
+
+    return submatrix;
+}
+
+
+
+
+};
 
 
 
@@ -162,4 +249,3 @@ void readInputFile(int &numLayers, int &numLoads, int &numPoints, vector<Layer> 
 
 void init_LET(Pave& iitpave);
 MatrixXd numint_coeff(int N, int n, MatrixXd Xp, MatrixXd X1, double H ,float a);
-MatrixXd repmat(const MatrixXd& mat, int rows, int cols);
