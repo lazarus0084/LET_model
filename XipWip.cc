@@ -13,14 +13,18 @@ MatrixXd numint_coeff(int N, int n, MatrixXd Xp, MatrixXd X1, double H,float a){
     MatrixXd dx1 = (dx + my.repmat(my.LinSeq(0,xd,xd*(x1-1)),xd,1)).transpose();
     dx = dx1;
     cout << "Matrix Xp:\n" << Xp << endl;
-    cout << "Matrix dx:\n" << dx << endl;
+    cout << "Matrix X1:\n" << X1 << endl;
 
 
     MatrixXd Xpp = my.getSubMatrix(Xp, dx.transpose());
     Xp = Xpp;
+    MatrixXd Arr = my.GetColumn(Xp, ":", 1) - my.GetColumn(X1, ":", 1);
 
+    //Xd(:,1)-Xl(:,1)
+    
     // Display the extracted matrix
-    cout << "Extracted Matrix:\n" << Xp << endl;
+    cout << "Extracted Matrix Xp:\n" << Xp << endl;
+    cout << "Matrix Arr:\n" << Arr << endl;
 
     
 

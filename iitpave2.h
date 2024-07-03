@@ -79,7 +79,7 @@ class Pave{
         int N;  //Number of Bessel zero points in numerical integration
         int n; //Number of Gauss points points between zero points.
         
-        double Lam1;
+        double Laml;
         double H;//Bottom depth of last bottom layer
         Eigen::VectorXd kh;  //= [1e6 1e6];  Partial Bonded  
 
@@ -95,7 +95,7 @@ class Pave{
         //Load configuration - Single case
         Eigen::VectorXd q;     //Load pressure [MPa] (uniform vertical pressure)
         Eigen::VectorXd a;    //Load radii [mm] (circular load)
-        Eigen::MatrixXd X1;  //Load positions [mm]: [x1 y1; x2 y2;..xi yi]
+        Eigen::MatrixXd Xl;  //Load positions [mm]: [x1 y1; x2 y2;..xi yi]
         
         // Location of evaluation points: [x1 y1 z1; x2 y2 z2;..] - Single case
        Eigen::MatrixXd Xp; 
@@ -127,12 +127,12 @@ class Pave{
         // Resize nu to match the size of layers
        
         
-        X1.resize(loads.size(), 2);
+        Xl.resize(loads.size(), 2);
         q.resize(loads.size());
 
        for (int i = 0; i < loads.size(); ++i) {
-       X1(i, 0) = loads[i].x0; // Corrected to use parentheses and 0-based indexing
-       X1(i, 1) = loads[i].y0; // Corrected to use parentheses and 0-based indexing
+       Xl(i, 0) = loads[i].x0; // Corrected to use parentheses and 0-based indexing
+       Xl(i, 1) = loads[i].y0; // Corrected to use parentheses and 0-based indexing
        q(i)     = loads[i].pressure;
 
 }
@@ -235,6 +235,24 @@ MatrixXd getSubMatrix(const MatrixXd& Mat, const VectorXd& indices) {
     }
 
     return submatrix;
+}
+MatrixXd GetColumn(const MatrixXd& Xp, const std::string& row_index, int column_index) {
+    int rows = Xp.rows();
+    int cols = Xp.cols();
+    MatrixXd result;
+
+    if (row_index == ":") {
+        // Get all rows for a specific column
+        result.resize(rows, 1);
+        result = Xp.col(column_index - 1);  // Adjust column index by -1
+    } else {
+        // Get a specific row and column
+        int row = std::stoi(row_index) - 1; // Adjust row index by -1
+        result.resize(1, 1);
+        result(0, 0) = Xp(row, column_index - 1);  // Adjust column index by -1
+    }
+
+    return result;
 }
 
 
