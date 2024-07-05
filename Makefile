@@ -1,8 +1,8 @@
 #Makefile for ILLITHERM-FV
 
 PROGRAM = iitpave2
-SOURCE = iitpave2.cc readinputs.cc LET.cc XipWip.cc
-OBJECTS = iitpave2.o readinputs.o LET.o   XipWip.o
+SOURCE = iitpave2.cc readinputs.cc LET.cc XipWip.cc besselroots.cc
+OBJECTS = iitpave2.o readinputs.o LET.o   XipWip.o besselroots.o
 ARCHIVE = iitpave2.tar
 
 CC = g++

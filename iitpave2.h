@@ -180,6 +180,21 @@ MatrixXd repmat(const VectorXd& mat, int rows, int cols) {
     return result;
 }
 
+
+// Function overload for RowVectorXd
+MatrixXd repmat(const RowVectorXd& mat, int rows, int cols) {
+    int size = mat.size();
+    MatrixXd result(rows, cols * size);
+
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            result.block(i, j * size, 1, size) = mat;  // Use block operation to assign the row vector
+        }
+    }
+
+    return result;
+}
+
 // Function overload for MatrixXd
 MatrixXd repmat(const MatrixXd& mat, int rows, int cols) {
     int numRows = mat.rows();
@@ -196,26 +211,24 @@ MatrixXd repmat(const MatrixXd& mat, int rows, int cols) {
 }
 
 // Function to generate a sequence j:k
-VectorXd LinSeq(int j, int k) {
+MatrixXd LinSeq(int j, int k) {
     int m = k - j + 1;
-    VectorXd result(m);
+    MatrixXd result(m, 1);
     for (int idx = 0; idx < m; ++idx) {
-        result(idx) = j + idx;
+        result(idx, 0) = j + idx;
     }
     return result;
 }
 
 // Function to generate a sequence j:i:k
-VectorXd LinSeq(int j, int i, int k) {
+MatrixXd LinSeq(int j, int i, int k) {
     int m = static_cast<int>((k - j) / i) + 1;
-    VectorXd result(m);
+    MatrixXd result(m, 1);
     for (int idx = 0; idx < m; ++idx) {
-        result(idx) = j + idx * i;
+        result(idx, 0) = j + idx * i;
     }
     return result;
-    
 }
-
 MatrixXd getSubMatrix(const MatrixXd& Mat, const VectorXd& indices) {
     int numRows = indices.size();
     int numCols = Mat.cols();
@@ -266,4 +279,5 @@ MatrixXd GetColumn(const MatrixXd& Xp, const std::string& row_index, int column_
 void readInputFile(int &numLayers, int &numLoads, int &numPoints, vector<Layer> &layers, vector<Load> &loads, vector<Point> &points,Pave &Gen, string inputfilename);
 
 void init_LET(Pave& iitpave);
-MatrixXd numint_coeff(int N, int n, MatrixXd Xp, MatrixXd X1, double H ,float a);
+MatrixXd numint_coeff(int N, int n, MatrixXd Xp, MatrixXd Xl, double H ,float a);
+MatrixXd besselroots(int o, int N, int k);
