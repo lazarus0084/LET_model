@@ -5,7 +5,7 @@ MatrixXd besselroots(int o, int N, int k) {
         filename = "B0r.csv";
     } else if (o == 1 && k == 1) {
         filename = "B1r.csv";  
-        cout << "Successfully read bessel roots." << endl;
+        cout << "Successfully read Bessel roots." << endl;
     } else {
         std::cerr << "Unsupported combination of parameters." << std::endl;
         return MatrixXd(0, 0); // Return an empty matrix on error

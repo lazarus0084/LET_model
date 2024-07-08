@@ -267,6 +267,51 @@ MatrixXd GetColumn(const MatrixXd& Xp, const std::string& row_index, int column_
 
     return result;
 }
+MatrixXd JoinAllRows(const MatrixXd& mat1, const MatrixXd& mat2) {
+    // Check if matrices have the same number of rows
+    assert(mat1.rows() == mat2.rows());
+
+    // Create a new matrix for concatenation
+    MatrixXd concatenated(mat1.rows(), mat1.cols() + mat2.cols());
+
+    // Copy mat1 into the left part of concatenated matrix
+    concatenated.block(0, 0, mat1.rows(), mat1.cols()) = mat1;
+
+    // Copy mat2 into the right part of concatenated matrix
+    concatenated.block(0, mat1.cols(), mat2.rows(), mat2.cols()) = mat2;
+
+    return concatenated;
+}
+// Function to sort each column of the matrix
+void sortColumns(MatrixXd& matrix) {
+    int rows = matrix.rows();
+    int cols = matrix.cols();
+
+    for (int col = 0; col < cols; ++col) {
+        // Extract the column into a temporary vector
+        vector<double> column;
+        for (int row = 0; row < rows; ++row) {
+            column.push_back(matrix(row, col)); // Access using () for Eigen MatrixXd
+        }
+
+        // Sort the column vector
+        sort(column.begin(), column.end());
+
+        // Place sorted values back into the matrix column
+        for (int row = 0; row < rows; ++row) {
+            matrix(row, col) = column[row]; // Assign back using () for Eigen MatrixXd
+        }
+    }
+}
+VectorXd ExtractVecElements(const VectorXd& rho, const VectorXd& rho_non0) {
+    VectorXd ExtractedElements(rho_non0.size());
+    for (int i = 0; i < rho_non0.size(); ++i) {
+        int index = static_cast<int>(rho_non0(i)) - 1; // Adjust to 0-based indexing
+        ExtractedElements(i) = rho(index);
+    }
+    return ExtractedElements;
+}
+
 
 
 
