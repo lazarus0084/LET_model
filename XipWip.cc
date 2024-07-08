@@ -38,9 +38,11 @@ MatrixXd numint_coeff(int N, int n, MatrixXd Xp, MatrixXd Xl, double H,float a){
     for (size_t i = 0; i < rho_Non0_temp.size(); ++i) {
         rho_Non0(i) = rho_Non0_temp[i];
     }
-    MatrixXd mat1;mat1.resize(n3, N); mat1.setZero();
-    MatrixXd mat2 = my.repmat(B1r,n4,1).array()/my.repmat(alpha,1,N).array();
-    MatrixXd roots_z = my.JoinAllRows(mat1,mat2);
+    MatrixXd mat1;mat1.resize(n3, N); mat1.setZero(); //(rho(rho_Non0) selects indices of 
+    MatrixXd mat2 = my.repmat(B0r,n4,1);
+    MatrixXd mat3 = my.repmat(my.ExtractVecElements(rho, rho_Non0),1,N);
+    //MatrixXd roots_z = mat2.array()*mat3.array();
+  
        
     
 
@@ -171,15 +173,17 @@ cout << "Matrix non 0 rho:\n" << rho_Non0 << endl;
     for (int i = 0; i < ExtractedElements.size(); ++i) {
         cout << ExtractedElements[i] << " ";
     }
-   
-   #endif
-  
-    
-   
-    cout << "Size of roots_z : " << roots_z.rows() << "x" << roots_z.cols() << endl;
+     cout << "Size of roots_z : " << roots_z.rows() << "x" << roots_z.cols() << endl;
     //cout << "roots_z : " << roots_z << endl;
     cout << "Element at index (5, 6): " << roots_z(5, 6) << endl;
+    cout << "Size of roots_z : " << roots_z.rows() << "x" << roots_z.cols() << endl;
+   
+   #endif
 
+  cout << "Size of mat2: " << mat2.rows() << " x " << mat2.cols() << endl;
+  cout << "Size of mat3: " << mat3.rows() << " x " << mat3.cols() << endl;
+   
+   
    return MatrixXd::Identity(1, 1);
 
 }
