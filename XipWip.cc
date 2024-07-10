@@ -42,28 +42,25 @@ MatrixXd numint_coeff(int N, int n, MatrixXd Xp, MatrixXd Xl, double H,float a){
     
     VectorXd arg1 = rho(rho_Non0);
     VectorXi columnIndices = VectorXi::LinSpaced(N, 0, N-1);
-    //rho_Non0 is the rowIndices!
+    //rowIndices = rho_Non0 
     if (rho_Non0.size() != 0) {
       roots_z(rho_Non0, columnIndices) = (repmat(B0r,rho_Non0.size(),1)).array()/(repmat(arg1,1,N)).array();
     }
     // Sort each column (which is now each row after transposition)
-    roots_z.transposeInPlace();
-   
+    MatrixXd roots_z_primitive = roots_z;
+     // Sort each row of roots_z in ascending order
     for (int i = 0; i < roots_z.rows(); ++i) {
-        sort(roots_z.row(i).data(), roots_z.row(i).data() + roots_z.cols());
+        Eigen::VectorXd row = roots_z.row(i);
+        std::sort(row.data(), row.data() + row.size());
+        roots_z.row(i) = row;
     }
-    // Transpose back to original orientation
-    roots_z.transposeInPlace();
-
-
-
-
-
-
-
+  
          // Print rows and columns of roots_z
     cout << "roots_z dimensions: (" << roots_z.rows() << ", " << roots_z.cols() << ")" << endl;
-    cout << "Element of roots_z after sorting at position (7,599): " << roots_z(7,599) << endl;
+    cout << "Element of roots_z after sorting at position (7,498): " << roots_z(7,498) << endl;
+    int i = 286;
+    cout << "Column " << i << " of roots_z prmitive:\n" << roots_z_primitive.col(i) << "\n";
+    cout << "Column " << i << " of roots_z:\n" << roots_z.col(i) << "\n";
     
     return MatrixXd::Identity(1, 1);
    
