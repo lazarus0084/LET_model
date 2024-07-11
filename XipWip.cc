@@ -23,8 +23,8 @@ MatrixXd numint_coeff(int N, int n, MatrixXd Xp, MatrixXd Xl, double H,float a){
    VectorXd rho = r/H; 
    MatrixXd B0r = besselroots(0, N, 1);
    MatrixXd B1r = besselroots(1, N, 1);
-   double n3 = rho.size();       //Number of radii
-   double n4 = alpha.size();     //Number of loads: NB: n3 = n4, due to repmat(..)
+   int n3 = rho.size();       //Number of radii
+   int n4 = alpha.size();     //Number of loads: NB: n3 = n4, due to repmat(..)
                                  //commands above
 
     // Find non-zero radii/rho
@@ -46,23 +46,65 @@ MatrixXd numint_coeff(int N, int n, MatrixXd Xp, MatrixXd Xl, double H,float a){
     if (rho_Non0.size() != 0) {
       roots_z(rho_Non0, columnIndices) = (repmat(B0r,rho_Non0.size(),1)).array()/(repmat(arg1,1,N)).array();
     }
-    // Sort each column (which is now each row after transposition)
-    MatrixXd roots_z_primitive = roots_z;
      // Sort each row of roots_z in ascending order
     for (int i = 0; i < roots_z.rows(); ++i) {
-        Eigen::VectorXd row = roots_z.row(i);
-        std::sort(row.data(), row.data() + row.size());
+        VectorXd row = roots_z.row(i);
+        sort(row.data(), row.data() + row.size());
         roots_z.row(i) = row;
     }
-  
-         // Print rows and columns of roots_z
-    cout << "roots_z dimensions: (" << roots_z.rows() << ", " << roots_z.cols() << ")" << endl;
-    cout << "Element of roots_z after sorting at position (7,498): " << roots_z(7,498) << endl;
-    int i = 286;
-    cout << "Column " << i << " of roots_z prmitive:\n" << roots_z_primitive.col(i) << "\n";
-    cout << "Column " << i << " of roots_z:\n" << roots_z.col(i) << "\n";
-    
-    return MatrixXd::Identity(1, 1);
+    // Initialize a vector with values from 1 to n3*N
+    VectorXd values = VectorXd::LinSpaced(n3 * N, 1,  n3 * N);
+    Map<Eigen::MatrixXd> indx(values.data(), n3, N);
+
+    // Find non-zero radii/rho
+    vector<int> rowIndices;
+    for (int i = 0; i < rho.size(); ++i) {
+        if (rho(i) == 0) {
+            rowIndices.push_back(i);
+        }
+    }
+    // Print the rowIndices
+    cout << "rowIndices for first use: ";
+    for (int idx : rowIndices) {
+        cout << idx << " ";
+    }
+    cout << endl;
+    //Eigen::VectorXi eigenVector = Eigen::Map<Eigen::VectorXi>(rowIndices.data(), rowIndices.size());
+
+ columnIndices = VectorXi::LinSpaced(indx.cols(), 0, indx.cols()-1);
+ VectorXd B(columnIndices.size());B.setOnes(); B = B*n3*N;
+
+ for (int i = 0; i < rowIndices.size(); ++i) {
+        indx.row(rowIndices[i]) += B.transpose();
+    }
+rowIndices.clear();assert(rho.size() == alpha.size());
+double epsilon = 1e-8;
+for (int i = 0; i < rho.size(); ++i) {
+       if (fabs(rho(i) - alpha(i)) < epsilon) {
+    rowIndices.push_back(i);
+}
+}
+
+B = VectorXd::LinSpaced(N, 0, N-1);; B = B*n3;
+
+ for (int i = 0; i < rowIndices.size(); ++i) {
+       indx.row(rowIndices[i]) += B.transpose(); 
+
+    }
+
+
+// Print the rowIndices
+    cout << "rowIndices for 2nd use: ";
+    for (int idx : rowIndices) {
+        cout << idx << " ";
+    }
+    cout << endl;
+
+saveit(indx);
+
+
+
+return MatrixXd::Identity(1, 1);
    
 }
 

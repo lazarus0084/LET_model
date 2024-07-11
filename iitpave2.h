@@ -179,3 +179,4 @@ MatrixXd JoinAllRows(const MatrixXd& mat1, const MatrixXd& mat2);
 void sortColumns(MatrixXd& matrix);
 
 VectorXd ExtractVecElements(const VectorXd& rho, const VectorXd& rho_non0);
+void saveit(const Eigen::MatrixXd& mat);

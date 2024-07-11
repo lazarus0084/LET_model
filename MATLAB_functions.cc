@@ -153,3 +153,13 @@ VectorXd ExtractVecElements(const VectorXd& rho, const VectorXd& rho_non0) {
     }
     return ExtractedElements;
 }
+void saveit(const Eigen::MatrixXd& mat) {
+    std::ofstream file("mat.txt");
+    if (file.is_open()) {
+        file << mat;
+        file.close();
+        std::cout << "Matrix saved to mat.txt" << std::endl;
+    } else {
+        std::cerr << "Unable to open file for writing" << std::endl;
+    }
+}
