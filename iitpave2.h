@@ -182,3 +182,4 @@ void sortColumns(MatrixXd& matrix);
 VectorXd ExtractVecElements(const VectorXd& rho, const VectorXd& rho_non0);
 void saveit(const Eigen::MatrixXd& mat);
 MatrixXd linearIndexing(const MatrixXd &A, const MatrixXd &B) ;
+pair<MatrixXd, MatrixXd> lookup_gauss(int n, const VectorXd& a, const VectorXd& b);

@@ -104,9 +104,17 @@ B = VectorXd::LinSpaced(N, 0, N-1);; B = B*n3;
 arg1 = VectorXd::Zero(n3);
 MatrixXd seq_z = JoinAllRows(arg1,linearIndexing(roots_z,indx));
 saveit(seq_z);
+VectorXd aa = seq_z.col(0);
+VectorXd bb = seq_z.col(1);
 
+// Call lookup_gauss to get mat1 and mat2
+    auto result = lookup_gauss(n, aa, bb);
+    mat1 = result.first;
+    mat2 = result.second;
 
-
+    // // Print or use mat1 and mat2 as needed
+    // cout << "mat1:\n" << mat1 << endl;
+    // cout << "mat2:\n" << mat2 << endl;
 return MatrixXd::Identity(1, 1);
    
 }
