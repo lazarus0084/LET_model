@@ -175,8 +175,10 @@ MatrixXd LinSeq(int j, int i, int k);
 MatrixXd getSubMatrix(const MatrixXd& Mat, const VectorXd& indices);
 MatrixXd GetColumn(const MatrixXd& Xp, const std::string& row_index, int column_index);
 MatrixXd JoinAllRows(const MatrixXd& mat1, const MatrixXd& mat2);
+MatrixXd JoinAllRows(const VectorXd& vec1, const MatrixXd& mat2);
 
 void sortColumns(MatrixXd& matrix);
 
 VectorXd ExtractVecElements(const VectorXd& rho, const VectorXd& rho_non0);
 void saveit(const Eigen::MatrixXd& mat);
+MatrixXd linearIndexing(const MatrixXd &A, const MatrixXd &B) ;

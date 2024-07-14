@@ -109,6 +109,7 @@ MatrixXd GetColumn(const MatrixXd& Xp, const std::string& row_index, int column_
 
     return result;
 }
+// Overload for concatenating MatrixXd with MatrixXd
 MatrixXd JoinAllRows(const MatrixXd& mat1, const MatrixXd& mat2) {
     // Check if matrices have the same number of rows
     assert(mat1.rows() == mat2.rows());
@@ -121,6 +122,23 @@ MatrixXd JoinAllRows(const MatrixXd& mat1, const MatrixXd& mat2) {
 
     // Copy mat2 into the right part of concatenated matrix
     concatenated.block(0, mat1.cols(), mat2.rows(), mat2.cols()) = mat2;
+
+    return concatenated;
+}
+
+// Overload for concatenating VectorXd with MatrixXd
+MatrixXd JoinAllRows(const VectorXd& vec1, const MatrixXd& mat2) {
+    // Check if vector and matrix have the same number of rows
+    assert(vec1.size() == mat2.rows());
+
+    // Create a new matrix for concatenation
+    MatrixXd concatenated(vec1.size(), 1 + mat2.cols());
+
+    // Copy vec1 into the first column of concatenated matrix
+    concatenated.col(0) = vec1;
+
+    // Copy mat2 into the remaining columns of concatenated matrix
+    concatenated.block(0, 1, mat2.rows(), mat2.cols()) = mat2;
 
     return concatenated;
 }
@@ -163,3 +181,27 @@ void saveit(const Eigen::MatrixXd& mat) {
         std::cerr << "Unable to open file for writing" << std::endl;
     }
 }
+
+MatrixXd linearIndexing(const MatrixXd &A, const MatrixXd &B) {
+    int rowsA = A.rows();
+    int colsA = A.cols();
+    int sizeB = B.size();
+
+    MatrixXd C(B.rows(), B.cols());
+
+    for (int i = 0; i < B.rows(); ++i) {
+        for (int j = 0; j < B.cols(); ++j) {
+            int index = static_cast<int>(B(i, j)) - 1;  // Converting to 0-based index
+            if (index < 0 || index >= rowsA * colsA) {
+                cerr << "Error: Index " << B(i, j) << " is out of bounds." << endl;
+                exit(EXIT_FAILURE);
+            }
+            int row = index % rowsA;
+            int col = index / rowsA;
+            C(i, j) = A(row, col);
+        }
+    }
+
+    return C;
+}
+

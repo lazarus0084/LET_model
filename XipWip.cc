@@ -1,5 +1,6 @@
 #include "iitpave2.h"
 
+
 MatrixXd numint_coeff(int N, int n, MatrixXd Xp, MatrixXd Xl, double H,float a){
    
  // Number of load points (xl) and deformation points (xd)
@@ -42,7 +43,7 @@ MatrixXd numint_coeff(int N, int n, MatrixXd Xp, MatrixXd Xl, double H,float a){
     
     VectorXd arg1 = rho(rho_Non0);
     VectorXi columnIndices = VectorXi::LinSpaced(N, 0, N-1);
-    //rowIndices = rho_Non0 
+    //rowIndices = rho_Non0 ;
     if (rho_Non0.size() != 0) {
       roots_z(rho_Non0, columnIndices) = (repmat(B0r,rho_Non0.size(),1)).array()/(repmat(arg1,1,N)).array();
     }
@@ -100,7 +101,9 @@ B = VectorXd::LinSpaced(N, 0, N-1);; B = B*n3;
     }
     cout << endl;
 
-saveit(indx);
+arg1 = VectorXd::Zero(n3);
+MatrixXd seq_z = JoinAllRows(arg1,linearIndexing(roots_z,indx));
+saveit(seq_z);
 
 
 
