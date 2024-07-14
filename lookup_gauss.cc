@@ -74,11 +74,10 @@ pair<MatrixXd, MatrixXd> lookup_gauss(int n, const VectorXd& a, const VectorXd& 
         exit(1);
     }
 
-
-
-MatrixXd mat1 = 0.5*(b-a)*wp;
+n = xp.size();
 RowVectorXd ones(n); ones.setOnes(); 
-MatrixXd mat2 = 0.5*(b-a)*xp + 0.5*(b+a)*ones;
-
+MatrixXd mat1 = 0.5*(b-a)*xp + 0.5*(b+a)*ones;
+MatrixXd mat2 = 0.5*(b-a)*wp;
 return make_pair(mat1, mat2);
+
 }

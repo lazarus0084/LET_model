@@ -2,7 +2,7 @@
 
 PROGRAM = iitpave2
 SOURCE = iitpave2.cc readinputs.cc LET.cc XipWip.cc besselroots.cc MATLAB_functions.cc lookup_gauss.cc;
-OBJECTS = iitpave2.o readinputs.o LET.o   XipWip.o besselroots.o MATLAB_functions.o    lookup_gauss.o;
+OBJECTS = iitpave2.o readinputs.o LET.o   XipWip.o besselroots.o MATLAB_functions.o lookup_gauss.o;
 ARCHIVE = iitpave2.tar
 
 CC = g++

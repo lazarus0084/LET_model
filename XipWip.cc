@@ -64,14 +64,7 @@ MatrixXd numint_coeff(int N, int n, MatrixXd Xp, MatrixXd Xl, double H,float a){
             rowIndices.push_back(i);
         }
     }
-    // Print the rowIndices
-    cout << "rowIndices for first use: ";
-    for (int idx : rowIndices) {
-        cout << idx << " ";
-    }
-    cout << endl;
-    //Eigen::VectorXi eigenVector = Eigen::Map<Eigen::VectorXi>(rowIndices.data(), rowIndices.size());
-
+    
  columnIndices = VectorXi::LinSpaced(indx.cols(), 0, indx.cols()-1);
  VectorXd B(columnIndices.size());B.setOnes(); B = B*n3*N;
 
@@ -93,29 +86,31 @@ B = VectorXd::LinSpaced(N, 0, N-1);; B = B*n3;
 
     }
 
-
-// Print the rowIndices
-    cout << "rowIndices for 2nd use: ";
-    for (int idx : rowIndices) {
-        cout << idx << " ";
-    }
-    cout << endl;
-
 arg1 = VectorXd::Zero(n3);
 MatrixXd seq_z = JoinAllRows(arg1,linearIndexing(roots_z,indx));
-saveit(seq_z);
-VectorXd aa = seq_z.col(0);
-VectorXd bb = seq_z.col(1);
 
-// Call lookup_gauss to get mat1 and mat2
-    auto result = lookup_gauss(n, aa, bb);
-    mat1 = result.first;
-    mat2 = result.second;
+// Distribution of n integration points and weights of the first interval 
+auto result1 = lookup_gauss(n, seq_z.col(0),seq_z.col(1));
+MatrixXd xip_z1 = result1.first;  
+MatrixXd wip_z1 = result1.second;
 
-    // // Print or use mat1 and mat2 as needed
-    // cout << "mat1:\n" << mat1 << endl;
-    // cout << "mat2:\n" << mat2 << endl;
+
+//Distribution of 20 integration points and weights of the second 
+
+VectorXd q1 = seq_z.col(1); VectorXd q2 = seq_z.col(2);
+auto result2 = lookup_gauss(20, q1, q2);
+MatrixXd xip_z2 = result2.first;  
+MatrixXd wip_z2 = result2.second;
+
+//Distribution of 10 integration points and weights of the third interval
+
+auto result3 = lookup_gauss(10, seq_z.col(2), seq_z.col(3));
+MatrixXd xip_z3 = result3.first;  
+MatrixXd wip_z3 = result3.second;
+saveit(xip_z1);
+cout << xip_z2; 
+//[xip_z3 , wip_z3]=lookup_gauss(10,seq_z(:,3),seq_z(:,4));  
+
 return MatrixXd::Identity(1, 1);
-   
+  
 }
-
