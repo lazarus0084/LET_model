@@ -17,6 +17,9 @@ void init_LET(Pave& iitpave) {
    iitpave.Laml = Laml ; iitpave.H = H ;
    
    MatrixXd XipWip = numint_coeff(N, n, Xp, Xl, H , a);  //*filename XipWip sIntegration points and weights
+
+   // Display size of XipWip
+  cout << "Size of XipWip: " << XipWip.rows() << " rows x " << XipWip.cols() << " columns." << endl;
 // Print matrices with clear labels and separation
 #if 0
 cout << "Xp:" << endl << Xp << endl << endl;

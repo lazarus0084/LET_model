@@ -90,27 +90,90 @@ arg1 = VectorXd::Zero(n3);
 MatrixXd seq_z = JoinAllRows(arg1,linearIndexing(roots_z,indx));
 
 // Distribution of n integration points and weights of the first interval 
-auto result1 = lookup_gauss(n, seq_z.col(0),seq_z.col(1));
-MatrixXd xip_z1 = result1.first;  
-MatrixXd wip_z1 = result1.second;
+auto result = lookup_gauss(n, seq_z.col(0),seq_z.col(1));
+MatrixXd xip_z1 = result.first;  
+MatrixXd wip_z1 = result.second;
 
 
 //Distribution of 20 integration points and weights of the second 
 
-VectorXd q1 = seq_z.col(1); VectorXd q2 = seq_z.col(2);
-auto result2 = lookup_gauss(20, q1, q2);
-MatrixXd xip_z2 = result2.first;  
-MatrixXd wip_z2 = result2.second;
+result = lookup_gauss(20,seq_z.col(1) ,seq_z.col(2));
+MatrixXd xip_z2 = result.first;  
+MatrixXd wip_z2 = result.second;
 
 //Distribution of 10 integration points and weights of the third interval
 
-auto result3 = lookup_gauss(10, seq_z.col(2), seq_z.col(3));
-MatrixXd xip_z3 = result3.first;  
-MatrixXd wip_z3 = result3.second;
-saveit(xip_z1);
-cout << xip_z2; 
-//[xip_z3 , wip_z3]=lookup_gauss(10,seq_z(:,3),seq_z(:,4));  
+result = lookup_gauss(10, seq_z.col(2), seq_z.col(3));
+MatrixXd xip_z3 = result.first;  
+MatrixXd wip_z3 = result.second;
 
-return MatrixXd::Identity(1, 1);
+
+
+// Extract a range of columns (e.g., columns 2 to 5, zero-based indexing)
+    int startColumn = 3; // reduce 1 from the val in  MATLAB
+    int numColumns = seq_z.cols()- startColumn- 1;
+
+
+
+    // Perform the block operation
+    MatrixXd seq_z1 = seq_z.block(0, startColumn, seq_z.rows(), numColumns).transpose();
+   
+    startColumn = 4; // reduce 1 from the val in  MATLAB
+    numColumns = seq_z.cols()- startColumn;
+    MatrixXd seq_z2 = seq_z.block(0, startColumn, seq_z.rows(), numColumns).transpose();
+    
+
+     //Distribution of 5 integration points and weights of the remaining intervals
+    VectorXd Arg1 = Map<VectorXd>(seq_z1.data(), seq_z1.size());
+    VectorXd Arg2 = Map<VectorXd>(seq_z2.data(), seq_z2.size());
+    result = lookup_gauss(5, Arg1,Arg2);
+    MatrixXd xip_z = result.first;  
+    MatrixXd wip_z = result.second;
+
+    //Reorganize integration points and weights - Every row
+    //(after reorganization) now refers to a single radius/point-to-load case
+    xip_z.transposeInPlace();     //First we transform the matrices
+    
+         
+    Arg1 = Map<VectorXd>(xip_z.data(), xip_z.size());
+    xip_z = Map<MatrixXd>(Arg1.data(),n3 ,Arg1.size() / n3 );
+    
+     // Concatenate matrices horizontally
+    MatrixXd xip_zConctd(xip_z1.rows(), xip_z1.cols() + xip_z2.cols() + xip_z3.cols() + xip_z.cols());
+    xip_zConctd << xip_z1, xip_z2, xip_z3, xip_z;
+    xip_z = xip_zConctd;
+    MatrixXd xip_r = xip_zConctd;
+   
+     
+    //same of wip_z
+    wip_z.transposeInPlace();     //First we transform the matrices
+         
+    Arg1 = Map<VectorXd>(wip_z.data(), wip_z.size());
+
+            // Perform the reshaping in a single line
+    wip_z = Map<MatrixXd>(Arg1.data(),n3 , Arg1.size() / n3 );
+
+    // Concatenate wip_z1, wip_z2, wip_z3, and wip_z horizontally
+    MatrixXd wip_zConctd(wip_z1.rows(), wip_z1.cols() + wip_z2.cols() + wip_z3.cols() + wip_z.cols());
+    wip_zConctd << wip_z1, wip_z2, wip_z3, wip_z;
+    wip_z = wip_zConctd;
+    MatrixXd wip_r = wip_zConctd;
+
+
+   //Concatenate matrices vertically
+    MatrixXd XipWip_returning(xip_z.rows() + wip_z.rows() + xip_r.rows() + wip_r.rows(), xip_z.cols());
+    XipWip_returning << xip_z,
+              wip_z,
+              xip_r,
+              wip_r;
+    // std::cout << "Size of xip_z: " << xip_z.rows() << "x" << xip_z.cols() << std::endl;
+    // std::cout << "Size of wip_z: " << wip_z.rows() << "x" << wip_z.cols() << std::endl;
+    // std::cout << "Size of xip_r: " << xip_r.rows() << "x" << xip_r.cols() << std::endl;
+    // std::cout << "Size of wip_r: " << wip_r.rows() << "x" << wip_r.cols() << std::endl;
+    // Display size of XipWip
+    //cout << "Size of XipWip: " << XipWip.rows() << " rows x " << XipWip.cols() << " columns." << endl;
+
+  
+return XipWip_returning;
   
 }
