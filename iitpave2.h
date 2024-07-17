@@ -161,6 +161,7 @@ void readInputFile(int &numLayers, int &numLoads, int &numPoints, vector<Layer> 
 void init_LET(Pave& iitpave);
 MatrixXd numint_coeff(int N, int n, MatrixXd Xp, MatrixXd Xl, double H ,float a);
 MatrixXd besselroots(int o, int N, int k);
+void arb_func(int n, const VectorXd& zi, const VectorXd& E, const VectorXd& nu, const Pave& iitpave);
 
 //*MATLAB Function prototypes*/
 MatrixXd repmat(int mat, int rows, int cols);

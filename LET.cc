@@ -7,9 +7,9 @@ void init_LET(Pave& iitpave) {
     MatrixXd Xp = iitpave.Xp; // Output coordinates !!Xd in alva file
     MatrixXd Xl = iitpave.Xl; // Transpose Load position coordinates
    //MatrixXd a = iitpave.a.transpose();   // Transpose Load radii
-    MatrixXd E  = iitpave.E.transpose();   // Transpose Layer Young's moduli
-    MatrixXd nu = iitpave.nu.transpose(); // Transpose Layer Poisson's ratios
-    MatrixXd zi = iitpave.zi.transpose(); // // Define H as the last element of zi
+    VectorXd E  = iitpave.E.transpose();   // Transpose Layer Young's moduli
+    VectorXd nu = iitpave.nu.transpose(); // Transpose Layer Poisson's ratios
+    VectorXd zi = iitpave.zi.transpose(); // // Define H as the last element of zi
 
     
    double H = zi(zi.size() - 2); //Thickness of last layer above subgrade
@@ -17,9 +17,20 @@ void init_LET(Pave& iitpave) {
    iitpave.Laml = Laml ; iitpave.H = H ;
    
    MatrixXd XipWip = numint_coeff(N, n, Xp, Xl, H , a);  //*filename XipWip sIntegration points and weights
+//    // Display size of XipWip
+// cout << "Size of XipWip: " << XipWip.rows() << " rows x " << XipWip.cols() << " columns." << endl;
+// cout << "Element at (4, 6): " << XipWip(9, 42) << endl;
+arb_func(n,zi,E,nu,iitpave);
 
-   // Display size of XipWip
-  cout << "Size of XipWip: " << XipWip.rows() << " rows x " << XipWip.cols() << " columns." << endl;
+
+
+
+
+
+
+
+
+
 // Print matrices with clear labels and separation
 #if 0
 cout << "Xp:" << endl << Xp << endl << endl;
