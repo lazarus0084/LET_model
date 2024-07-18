@@ -74,24 +74,47 @@ if (zi.size() > E.size()){
 // Setup the boundary and continuity conditions
 //--------------------------------------------------------------------------
 // Define the i and j-coordinates
-RowVectorXd j = RowVectorXd::LinSpaced(n-1,0,n-2);
-RowVectorXd i = j.array() + 1;
+RowVectorXi j = RowVectorXi::LinSpaced(n-1,0,n-2);
+RowVectorXi i = j.array() + 1;
 
 
 // Define the equations
 MatrixXd Ai = VectorXd::Ones(n-1)*ONES;
+MatrixXd Bi_temp = (lam(i.array()) - lam(j.array()))*m;
+MatrixXd Bi = -Bi_temp.array().exp();
+MatrixXd Ci_a =  2*nu(j.array())*ONES; Ci_a.array() -= 1;
+MatrixXd Ci = lam(i.array())*m - Ci_a;
+MatrixXd Di_a = -Ci_a + lam(i.array())*m;
+MatrixXd Di = Di_a.array().exp();
+ //Concatenate matrices vertically
+MatrixXd XipWip_returning(xip_z.rows() + wip_z.rows() + xip_r.rows() + wip_r.rows(), xip_z.cols());
+XipWip_returning << xip_z,
+                    wip_z,
+                    xip_r,
+                     wip_r;
+    // std::cout << "S
+// MatrixXd Ci_b =  Ci_aarray()-1;
+// MatrixXd Ci =  lam(i.array()) - Ci_b;                                                     //VectorXd::Ones(j.size())-2*nu(j.array())*ONES - lam(i.array)*m;
 //Equations based on the vertical stresses
 // sigmaz = [                                                    ... 
 //  1*ones(n-1,1)*ONES                                           ...   Ai
 //  exp(-(lam(i)-lam(i-1))*m)                                    ...  % Bi
-// -(1-2*nu(j)*ONES-lam(i)*m)                                    ...  % Ci
-//  (1-2*nu(j)*ONES+lam(i)*m).*exp(-(lam(i)-lam(i-1))*m)         ...  % Di
+//-(1-2*nu(j)*ONES-lam(i)*m)                                          *Ci
+//  (1-2*nu(j)*ONES+lam(i)*m).*exp(-(lam(i)-lam(i-1))*m)*****************Di
 // -exp(-(lam(i+1)-lam(i))*m)                                    ...  % A{i+1}
 // -1*ones(n-1,1)*ONES                                           ...  % B{i+1}
 //  (1-2*nu(j+1)*ONES-lam(i)*m).*exp(-(lam(i+1)-lam(i))*m)       ...  % C{i+1}
-// -(1-2*nu(j+1)*ONES+lam(i)*m)                                  ...  % D{i+1}
+//-(1-2*nu(j+1)*ONES+lam(i)*m)                                  ...  % D{i+1}
 // ];
-cout << Ai;
+
+    // Print the sizes of Ai, Bi, Ci, and Di
+    std::cout << "Size of Ai: " << Ai.rows() << " x " << Ai.cols() << std::endl;
+    std::cout << "Size of Bi: " << Bi.rows() << " x " << Bi.cols() << std::endl;
+    std::cout << "Size of Ci: " << Ci.rows() << " x " << Ci.cols() << std::endl;
+    std::cout << "Size of Di: " << Di.rows() << " x " << Di.cols() << std::endl;
+    
+
+
 
  }
 
