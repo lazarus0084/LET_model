@@ -80,41 +80,75 @@ RowVectorXi i = j.array() + 1;
 
 // Define the equations
 MatrixXd Ai = VectorXd::Ones(n-1)*ONES;
-MatrixXd Bi_temp = (lam(i.array()) - lam(j.array()))*m;
-MatrixXd Bi = -Bi_temp.array().exp();
-MatrixXd Ci_a =  2*nu(j.array())*ONES; Ci_a.array() -= 1;
-MatrixXd Ci = lam(i.array())*m - Ci_a;
-MatrixXd Di_a = -Ci_a + lam(i.array())*m;
-MatrixXd Di = Di_a.array().exp();
- //Concatenate matrices vertically
-MatrixXd XipWip_returning(xip_z.rows() + wip_z.rows() + xip_r.rows() + wip_r.rows(), xip_z.cols());
-XipWip_returning << xip_z,
-                    wip_z,
-                    xip_r,
-                     wip_r;
-    // std::cout << "S
-// MatrixXd Ci_b =  Ci_aarray()-1;
-// MatrixXd Ci =  lam(i.array()) - Ci_b;                                                     //VectorXd::Ones(j.size())-2*nu(j.array())*ONES - lam(i.array)*m;
+MatrixXd Bi_temp = -(lam(i.array()) - lam(j.array())); Bi_temp = Bi_temp*m;
+MatrixXd Bi = Bi_temp.array().exp();
+MatrixXd Ci_a =  2*nu(j.array())*ONES; Ci_a = 1 - Ci_a.array() ;Ci_a = Ci_a - lam(i.array())*m;
+MatrixXd Ci = - Ci_a;             //-(1-2*nu(j)*ONES-lam(i)*m)  
+MatrixXd Di_a =  2*nu(j.array())*ONES; Di_a = 1 - Di_a.array() ;Di_a = Di_a + lam(i.array())*m; //(1-2*nu(j)*ONES+lam(i)*m).*exp(-(lam(i)-lam(i-1))*m)         ...  % Di
+MatrixXd Di = Di_a.array() * Bi.array();
+//for i+1 & j+1 coefficients
+i = i.array() + 1;
+j = j.array() + 1;
+MatrixXd Aiplus1 = VectorXd::Ones(n-1)*ONES;
+MatrixXd Biplus1_temp = -(lam(i.array()) - lam(j.array())); Biplus1_temp = Biplus1_temp*m;
+MatrixXd Biplus1 = Biplus1_temp.array().exp();
+MatrixXd Ciplus1_a =  2*nu(j.array())*ONES; Ciplus1_a = 1 - Ciplus1_a.array() ;Ciplus1_a = Ciplus1_a - lam(i.array())*m;
+MatrixXd Ciplus1 = - Ciplus1_a;             //-(1-2*nu(j)*ONES-lam(i)*m)  
+MatrixXd Diplus1_a =  2*nu(j.array())*ONES; Diplus1_a = 1 - Diplus1_a.array() ;Diplus1_a = Diplus1_a + lam(i.array())*m; //(1-2*nu(j)*ONES+lam(i)*m).*exp(-(lam(i)-lam(i-1))*m)         ...  % Di
+MatrixXd Diplus1 = Diplus1_a.array() * Biplus1.array();
+
 //Equations based on the vertical stresses
-// sigmaz = [                                                    ... 
-//  1*ones(n-1,1)*ONES                                           ...   Ai
-//  exp(-(lam(i)-lam(i-1))*m)                                    ...  % Bi
-//-(1-2*nu(j)*ONES-lam(i)*m)                                          *Ci
-//  (1-2*nu(j)*ONES+lam(i)*m).*exp(-(lam(i)-lam(i-1))*m)*****************Di
-// -exp(-(lam(i+1)-lam(i))*m)                                    ...  % A{i+1}
-// -1*ones(n-1,1)*ONES                                           ...  % B{i+1}
-//  (1-2*nu(j+1)*ONES-lam(i)*m).*exp(-(lam(i+1)-lam(i))*m)       ...  % C{i+1}
-//-(1-2*nu(j+1)*ONES+lam(i)*m)                                  ...  % D{i+1}
-// ];
+// Concatenate matrices horizontally
+MatrixXd sigmaz(Ai.rows(), Ai.cols() + Bi.cols() + Ci.cols() + Di.cols() + Aiplus1.cols() + Biplus1.cols() + Ciplus1.cols() + Diplus1.cols());
+sigmaz << Ai, Bi, Ci, Di, Aiplus1, Biplus1, Ciplus1, Diplus1;
+
+
+
+
+
+i = i.array() - 1;
+j = j.array() - 1;
+// Define the equations based on shear stresses
+MatrixXd Ai_tau = VectorXd::Ones(n-1)*ONES;
+MatrixXd Bi_tau_temp = -(lam(i.array()) - lam(j.array())); Bi_tau_temp = Bi_tau_temp*m;
+MatrixXd Bi_tau = Bi_tau_temp.array().exp();
+MatrixXd Ci_tau_a =  2*nu(j.array())*ONES;
+MatrixXd Ci_tau = Ci_tau_a + lam(i.array())*m; //-(1-2*nu(j)*ONES-lam(i)*m)  
+MatrixXd Di_tau_a =  2*nu(j.array())*ONES; Di_tau_a = Di_tau_a - lam(i.array())*m; //(1-2*nu(j)*ONES+lam(i)*m).*exp(-(lam(i)-lam(i-1))*m)         ...  % Di
+MatrixXd Di_tau = Di_tau_a.array() * Bi_tau.array(); 
+
+i = i.array() + 1;
+j = j.array() + 1;       
+
+MatrixXd Ai_tauplus1 = VectorXd::Ones(n-1)*ONES;
+
+MatrixXd Bi_tauplus1_temp = -(lam(i.array()) - lam(j.array())); Bi_tauplus1_temp = Bi_tauplus1_temp*m;
+
+MatrixXd Bi_tauplus1 = Bi_tauplus1_temp.array().exp();
+
+MatrixXd Ci_tauplus1_a =  2*nu(j.array())*ONES;
+
+MatrixXd Ci_tauplus1 = Ci_tauplus1_a + lam(i.array())*m; //-(1-2*nu(j)*ONES-lam(i)*m)  
+
+MatrixXd Di_tauplus1_a =  2*nu(j.array())*ONES; Di_tauplus1_a = Di_tauplus1_a - lam(i.array())*m; //(1-2*nu(j)*ONES+lam(i)*m).*exp(-(lam(i)-lam(i-1))*m)    
+    
+MatrixXd Di_tauplus1 = Di_tauplus1_a.array() * Bi_tauplus1.array(); 
+
+
+// Combine the matrices
+MatrixXd tauz(Ai_tau.rows(), Ai_tau.cols() + Bi_tau.cols() + Ci_tau.cols() + Di_tau.cols() + Ai_tauplus1.cols() + Bi_tauplus1.cols() + Ci_tauplus1.cols() + Di_tauplus1.cols());
+tauz << Ai_tau, Bi_tau, Ci_tau, Di_tau, Ai_tauplus1, Bi_tauplus1, Ci_tauplus1, Di_tauplus1;
+
 
     // Print the sizes of Ai, Bi, Ci, and Di
     std::cout << "Size of Ai: " << Ai.rows() << " x " << Ai.cols() << std::endl;
     std::cout << "Size of Bi: " << Bi.rows() << " x " << Bi.cols() << std::endl;
     std::cout << "Size of Ci: " << Ci.rows() << " x " << Ci.cols() << std::endl;
     std::cout << "Size of Di: " << Di.rows() << " x " << Di.cols() << std::endl;
+    std::cout << "Size of sigmaz: " << sigmaz.rows() << " x " << sigmaz.cols() << std::endl;
     
 
-
+saveit(tauz);
 
  }
 

@@ -21,7 +21,6 @@ void init_LET(Pave& iitpave) {
 // cout << "Size of XipWip: " << XipWip.rows() << " rows x " << XipWip.cols() << " columns." << endl;
 // cout << "Element at (4, 6): " << XipWip(9, 42) << endl;
 arb_func(E.size(),zi_temp,E,nu,iitpave);
-cout << n;
 
 }
 
