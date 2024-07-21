@@ -136,8 +136,46 @@ MatrixXd Di_tauplus1 = Di_tauplus1_a.array() * Bi_tauplus1.array();
 
 
 // Combine the matrices
-MatrixXd tauz(Ai_tau.rows(), Ai_tau.cols() + Bi_tau.cols() + Ci_tau.cols() + Di_tau.cols() + Ai_tauplus1.cols() + Bi_tauplus1.cols() + Ci_tauplus1.cols() + Di_tauplus1.cols());
-tauz << Ai_tau, Bi_tau, Ci_tau, Di_tau, Ai_tauplus1, Bi_tauplus1, Ci_tauplus1, Di_tauplus1;
+MatrixXd taurz(Ai_tau.rows(), Ai_tau.cols() + Bi_tau.cols() + Ci_tau.cols() + Di_tau.cols() + Ai_tauplus1.cols() + Bi_tauplus1.cols() + Ci_tauplus1.cols() + Di_tauplus1.cols());
+taurz << Ai_tau, Bi_tau, Ci_tau, Di_tau, Ai_tauplus1, Bi_tauplus1, Ci_tauplus1, Di_tauplus1;
+
+ if (iitpave.bond == "Frictionless") { cout << " Control reached Frictionless " << endl ;
+   i = i.array() - 1;
+j = j.array() - 1;
+// Define the equations based on shear stresses
+MatrixXd Ai_tau = VectorXd::Ones(n-1)*ONES;
+MatrixXd Bi_tau_temp = -(lam(i.array()) - lam(j.array())); Bi_tau_temp = Bi_tau_temp*m;
+MatrixXd Bi_tau = Bi_tau_temp.array().exp();
+MatrixXd Ci_tau_a =  2*nu(j.array())*ONES;
+MatrixXd Ci_tau = Ci_tau_a + lam(i.array())*m; //-(1-2*nu(j)*ONES-lam(i)*m)  
+MatrixXd Di_tau_a =  2*nu(j.array())*ONES; Di_tau_a = Di_tau_a - lam(i.array())*m; //(1-2*nu(j)*ONES+lam(i)*m).*exp(-(lam(i)-lam(i-1))*m)         ...  % Di
+MatrixXd Di_tau = Di_tau_a.array() * Bi_tau.array(); 
+
+i = i.array() + 1;
+j = j.array() + 1;       
+
+MatrixXd Ai_tauplus1 = VectorXd::Ones(n-1)*ONES;
+
+MatrixXd Bi_tauplus1_temp = -(lam(i.array()) - lam(j.array())); Bi_tauplus1_temp = Bi_tauplus1_temp*m;
+
+MatrixXd Bi_tauplus1 = Bi_tauplus1_temp.array().exp(); Bi_tauplus1 = Bi_tauplus1 * 0;
+
+MatrixXd Ci_tauplus1_a =  2*nu(j.array())*ONES; 
+
+MatrixXd Ci_tauplus1 = Ci_tauplus1_a + lam(i.array())*m; Ci_tauplus1 = Ci_tauplus1 * 0; //-(1-2*nu(j)*ONES-lam(i)*m)  
+
+MatrixXd Di_tauplus1_a =  2*nu(j.array())*ONES; Di_tauplus1_a = Di_tauplus1_a - lam(i.array())*m; //(1-2*nu(j)*ONES+lam(i)*m).*exp(-(lam(i)-lam(i-1))*m)    
+    
+MatrixXd Di_tauplus1 = Di_tauplus1_a.array() * Bi_tauplus1.array(); Di_tauplus1 = Di_tauplus1 * 0;
+
+
+// Combine the matrices
+MatrixXd taurz1(Ai_tau.rows(), Ai_tau.cols() + Bi_tau.cols() + Ci_tau.cols() + Di_tau.cols() + Ai_tauplus1.cols() + Bi_tauplus1.cols() + Ci_tauplus1.cols() + Di_tauplus1.cols());
+taurz1 << Ai_tau, Bi_tau, Ci_tau, Di_tau, Ai_tauplus1, Bi_tauplus1, Ci_tauplus1, Di_tauplus1;
+    } // else {
+    //     // Code to execute if alva.bond is not 'Frictionless'
+    //     std::cout << "The bond type is not frictionless." << std::endl;
+    // }
 
 
     // Print the sizes of Ai, Bi, Ci, and Di
@@ -146,9 +184,16 @@ tauz << Ai_tau, Bi_tau, Ci_tau, Di_tau, Ai_tauplus1, Bi_tauplus1, Ci_tauplus1, D
     std::cout << "Size of Ci: " << Ci.rows() << " x " << Ci.cols() << std::endl;
     std::cout << "Size of Di: " << Di.rows() << " x " << Di.cols() << std::endl;
     std::cout << "Size of sigmaz: " << sigmaz.rows() << " x " << sigmaz.cols() << std::endl;
+
+     // Print the sizes of Ai, Bi, Ci, and Di
+    std::cout << "Size of Ai_tau: " << Ai_tau.rows() << " x " << Ai_tau.cols() << std::endl;
+    std::cout << "Size of Bi_tau: " << Bi_tau.rows() << " x " << Bi_tau.cols() << std::endl;
+    std::cout << "Size of Ci_atu: " << Ci_tau.rows() << " x " << Ci_tau.cols() << std::endl;
+    std::cout << "Size of Di_tau: " << Di_tau.rows() << " x " << Di_tau.cols() << std::endl;
+    std::cout << "Size of tauz: " << taurz.rows() << " x " << taurz.cols() << std::endl;
     
 
-saveit(tauz);
+saveit(taurz);
 
  }
 

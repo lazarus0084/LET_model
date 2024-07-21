@@ -1,5 +1,5 @@
 *GENERAL
-Full Bonded 300 30
+Full Frictionless 300 30
 *LAYERS
 3
 5000,0.35,260
