@@ -36,6 +36,19 @@ MatrixXd repmat(const RowVectorXd& mat, int rows, int cols) {
 
     return result;
 }
+// Function overload for RowVectorXi
+MatrixXi repmat(const RowVectorXi& mat, int rows, int cols) {
+    int size = mat.size();
+    MatrixXi result(rows, cols * size);
+
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            result.block(i, j * size, 1, size) = mat.cast<int>();  // Use block operation to assign the row vector
+        }
+    }
+
+    return result;
+}
 
 // Function overload for MatrixXd
 MatrixXd repmat(const MatrixXd& mat, int rows, int cols) {
@@ -63,11 +76,11 @@ MatrixXd LinSeq(int j, int k) {
 }
 
 // Function to generate a sequence j:i:k
-MatrixXd LinSeq(int j, int i, int k) {
-    int m = static_cast<int>((k - j) / i) + 1;
+MatrixXd LinSeq(int start, int step, int end) {
+    int m = static_cast<int>((end - start) / step) + 1;
     MatrixXd result(m, 1);
     for (int idx = 0; idx < m; ++idx) {
-        result(idx, 0) = j + idx * i;
+        result(idx, 0) = start + idx * step ;
     }
     return result;
 }
@@ -181,6 +194,18 @@ void saveit(const Eigen::MatrixXd& mat) {
         std::cerr << "Unable to open file for writing" << std::endl;
     }
 }
+// function overload for saveit
+void saveit(const Eigen::MatrixXi& mat) {
+    std::ofstream file("mat.txt");
+    if (file.is_open()) {
+        file << mat;
+        file.close();
+        std::cout << "Matrix saved to mat.txt" << std::endl;
+    } else {
+        std::cerr << "Unable to open file for writing" << std::endl;
+    }
+}
+
 
 MatrixXd linearIndexing(const MatrixXd &A, const MatrixXd &B) {
     int rowsA = A.rows();

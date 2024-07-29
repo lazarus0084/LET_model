@@ -8,6 +8,7 @@
 #include <limits>
 #include <math.h>
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
 #include <algorithm>
 
 
@@ -169,6 +170,7 @@ MatrixXd repmat(double mat, int rows, int cols);
 MatrixXd repmat(const VectorXd& mat, int rows, int cols);
 MatrixXd repmat(const RowVectorXd& mat, int rows, int cols);
 MatrixXd repmat(const MatrixXd& mat, int rows, int cols);
+MatrixXi repmat(const RowVectorXi& mat, int rows, int cols);
 
 MatrixXd LinSeq(int j, int k);
 MatrixXd LinSeq(int j, int i, int k);
@@ -182,5 +184,6 @@ void sortColumns(MatrixXd& matrix);
 
 VectorXd ExtractVecElements(const VectorXd& rho, const VectorXd& rho_non0);
 void saveit(const Eigen::MatrixXd& mat);
+void saveit(const Eigen::MatrixXi& mat) ;
 MatrixXd linearIndexing(const MatrixXd &A, const MatrixXd &B) ;
 pair<MatrixXd, MatrixXd> lookup_gauss(int n, const VectorXd& a, const VectorXd& b);

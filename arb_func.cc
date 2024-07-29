@@ -75,125 +75,307 @@ if (zi.size() > E.size()){
 //--------------------------------------------------------------------------
 // Define the i and j-coordinates
 RowVectorXi j = RowVectorXi::LinSpaced(n-1,0,n-2);
+
 RowVectorXi i = j.array() + 1;
+//for i+1 & j+1 coefficients
+
+RowVectorXi ip = i.array() + 1 ;
+
+RowVectorXi jp = j.array() + 1 ;
+//for i-1 & j-1 coefficients
+
+RowVectorXi im = i.array() - 1 ;
+
+RowVectorXi jm = j.array() - 1 ;
 
 
 // Define the equations
 MatrixXd Ai = VectorXd::Ones(n-1)*ONES;
-MatrixXd Bi_temp = -(lam(i.array()) - lam(j.array())); Bi_temp = Bi_temp*m;
-MatrixXd Bi = Bi_temp.array().exp();
-MatrixXd Ci_a =  2*nu(j.array())*ONES; Ci_a = 1 - Ci_a.array() ;Ci_a = Ci_a - lam(i.array())*m;
-MatrixXd Ci = - Ci_a;             //-(1-2*nu(j)*ONES-lam(i)*m)  
-MatrixXd Di_a =  2*nu(j.array())*ONES; Di_a = 1 - Di_a.array() ;Di_a = Di_a + lam(i.array())*m; //(1-2*nu(j)*ONES+lam(i)*m).*exp(-(lam(i)-lam(i-1))*m)         ...  % Di
-MatrixXd Di = Di_a.array() * Bi.array();
-//for i+1 & j+1 coefficients
-i = i.array() + 1;
-j = j.array() + 1;
-MatrixXd Aiplus1 = VectorXd::Ones(n-1)*ONES;
-MatrixXd Biplus1_temp = -(lam(i.array()) - lam(j.array())); Biplus1_temp = Biplus1_temp*m;
-MatrixXd Biplus1 = Biplus1_temp.array().exp();
-MatrixXd Ciplus1_a =  2*nu(j.array())*ONES; Ciplus1_a = 1 - Ciplus1_a.array() ;Ciplus1_a = Ciplus1_a - lam(i.array())*m;
-MatrixXd Ciplus1 = - Ciplus1_a;             //-(1-2*nu(j)*ONES-lam(i)*m)  
-MatrixXd Diplus1_a =  2*nu(j.array())*ONES; Diplus1_a = 1 - Diplus1_a.array() ;Diplus1_a = Diplus1_a + lam(i.array())*m; //(1-2*nu(j)*ONES+lam(i)*m).*exp(-(lam(i)-lam(i-1))*m)         ...  % Di
-MatrixXd Diplus1 = Diplus1_a.array() * Biplus1.array();
 
+MatrixXd Bi_temp = (lam(i.array()) - lam(j.array())); Bi_temp = -Bi_temp*m;
+MatrixXd Bi = Bi_temp.array().exp();
+
+MatrixXd Ci_a =  2*nu(j.array())*ONES; Ci_a = 1 - Ci_a.array() ;Ci_a = Ci_a - lam(i.array())*m;
+MatrixXd Ci = - Ci_a; 
+            //-(1-2*nu(j)*ONES-lam(i)*m)  
+MatrixXd Di_a =  2*nu(j.array())*ONES; Di_a = 1 - Di_a.array() ;Di_a = Di_a + lam(i.array())*m; //(1-2*nu(j)*ONES+lam(i)*m).*exp(-(lam(i)-lam(i-1))*m)         ...  % Di
+MatrixXd Di = Di_a.array() * Bi.array() ;
+
+MatrixXd Ai2 = -(lam(ip.array()) - lam(i.array())) * m ; Ai2 = -Ai2.array().exp();//.........Ai+1
+MatrixXd Bi2 = - Ai; //......................................................................Bi+1
+
+MatrixXd Ci2a = -2*nu(jp.array())*ONES - lam(i.array()) * m ; Ci2a = 1 + Ci2a.array() ;
+MatrixXd Ci2b = -(lam(ip.array()) - lam(i.array())) * m ; Ci2b = Ci2b.array().exp();//.........
+MatrixXd Ci2 = Ci2a.array() * Ci2b.array() ;
+
+MatrixXd Di2a =  2*nu(jp.array())*ONES ; MatrixXd Di2b = lam(i)*m ;
+MatrixXd Di2 = -1 + Di2a.array()  - Di2b.array() ;//.............................................. % Di+1
+                              
 //Equations based on the vertical stresses
 // Concatenate matrices horizontally
-MatrixXd sigmaz(Ai.rows(), Ai.cols() + Bi.cols() + Ci.cols() + Di.cols() + Aiplus1.cols() + Biplus1.cols() + Ciplus1.cols() + Diplus1.cols());
-sigmaz << Ai, Bi, Ci, Di, Aiplus1, Biplus1, Ciplus1, Diplus1;
+MatrixXd sigmaz(Ai.rows(), Ai.cols() + Bi.cols() + Ci.cols() + Di.cols() + Ai2.cols() + Bi2.cols() + Ci2.cols() + Di2.cols());
+sigmaz << Ai, Bi, Ci, Di, Ai2, Bi2, Ci2, Di2;
 
-
-
-
-
-i = i.array() - 1;
-j = j.array() - 1;
 // Define the equations based on shear stresses
 MatrixXd Ai_tau = VectorXd::Ones(n-1)*ONES;
-MatrixXd Bi_tau_temp = -(lam(i.array()) - lam(j.array())); Bi_tau_temp = Bi_tau_temp*m;
-MatrixXd Bi_tau = Bi_tau_temp.array().exp();
-MatrixXd Ci_tau_a =  2*nu(j.array())*ONES;
-MatrixXd Ci_tau = Ci_tau_a + lam(i.array())*m; //-(1-2*nu(j)*ONES-lam(i)*m)  
-MatrixXd Di_tau_a =  2*nu(j.array())*ONES; Di_tau_a = Di_tau_a - lam(i.array())*m; //(1-2*nu(j)*ONES+lam(i)*m).*exp(-(lam(i)-lam(i-1))*m)         ...  % Di
-MatrixXd Di_tau = Di_tau_a.array() * Bi_tau.array(); 
 
-i = i.array() + 1;
-j = j.array() + 1;       
+MatrixXd Bi_tau_a = -(lam(i.array()) - lam(im)) *m ; 
+MatrixXd Bi_tau = -Bi_tau_a.array().exp() ;//-exp(-(lam(i)-lam(i-1))*m)  
 
-MatrixXd Ai_tauplus1 = VectorXd::Ones(n-1)*ONES;
+MatrixXd Ci_tau = 2 * nu(j.array()) * ONES + lam(i.array()) * m ;  //(2*nu(j)*ONES+lam(i)*m)     
 
-MatrixXd Bi_tauplus1_temp = -(lam(i.array()) - lam(j.array())); Bi_tauplus1_temp = Bi_tauplus1_temp*m;
+MatrixXd Di_tau_a = 2*nu(j.array())*ONES - lam(i.array()) * m ;
+MatrixXd Di_tau_b = - (lam(i.array()) - lam(im.array())) * m ;Di_tau_b = Di_tau_b.array().exp() ;
+MatrixXd Di_tau = Di_tau_a.array() * Di_tau_b.array() ;
 
-MatrixXd Bi_tauplus1 = Bi_tauplus1_temp.array().exp();
+MatrixXd Ai_tau2 = -(lam(ip.array()) - lam(i.array())) * m;
+Ai_tau2 = -Ai_tau2.array().exp() ;  // -exp(-(lam(i+1)-lam(i))*m)                                     ... % A{i+1}
 
-MatrixXd Ci_tauplus1_a =  2*nu(j.array())*ONES;
+MatrixXd Bi_tau2 = Ai_tau ;
 
-MatrixXd Ci_tauplus1 = Ci_tauplus1_a + lam(i.array())*m; //-(1-2*nu(j)*ONES-lam(i)*m)  
 
-MatrixXd Di_tauplus1_a =  2*nu(j.array())*ONES; Di_tauplus1_a = Di_tauplus1_a - lam(i.array())*m; //(1-2*nu(j)*ONES+lam(i)*m).*exp(-(lam(i)-lam(i-1))*m)    
-    
-MatrixXd Di_tauplus1 = Di_tauplus1_a.array() * Bi_tauplus1.array(); 
+MatrixXd Ci_tau2_a = -(2*nu(jp.array())*ONES + lam(i.array()) * m ) ;
+MatrixXd Ci_tau2_b = - (lam(ip.array()) - lam(i.array())) * m ;Ci_tau2_b = Ci_tau2_b.array().exp() ;
+MatrixXd Ci_tau2 = Ci_tau2_a.array() * Ci_tau2_b.array() ;
+
+MatrixXd Di_tau2 = - (2 * nu(jp.array()) * ONES - lam(i.array()) * m) ; 
 
 
 // Combine the matrices
-MatrixXd taurz(Ai_tau.rows(), Ai_tau.cols() + Bi_tau.cols() + Ci_tau.cols() + Di_tau.cols() + Ai_tauplus1.cols() + Bi_tauplus1.cols() + Ci_tauplus1.cols() + Di_tauplus1.cols());
-taurz << Ai_tau, Bi_tau, Ci_tau, Di_tau, Ai_tauplus1, Bi_tauplus1, Ci_tauplus1, Di_tauplus1;
+MatrixXd taurz(Ai_tau.rows(), Ai_tau.cols() + Bi_tau.cols() + Ci_tau.cols() + Di_tau.cols() + Ai_tau2.cols() + Bi_tau2.cols() + Ci_tau2.cols() + Di_tau2.cols());
 
- if (iitpave.bond == "Frictionless") { cout << " Control reached Frictionless " << endl ;
-   i = i.array() - 1;
-j = j.array() - 1;
-// Define the equations based on shear stresses
-MatrixXd Ai_tau = VectorXd::Ones(n-1)*ONES;
-MatrixXd Bi_tau_temp = -(lam(i.array()) - lam(j.array())); Bi_tau_temp = Bi_tau_temp*m;
-MatrixXd Bi_tau = Bi_tau_temp.array().exp();
-MatrixXd Ci_tau_a =  2*nu(j.array())*ONES;
-MatrixXd Ci_tau = Ci_tau_a + lam(i.array())*m; //-(1-2*nu(j)*ONES-lam(i)*m)  
-MatrixXd Di_tau_a =  2*nu(j.array())*ONES; Di_tau_a = Di_tau_a - lam(i.array())*m; //(1-2*nu(j)*ONES+lam(i)*m).*exp(-(lam(i)-lam(i-1))*m)         ...  % Di
-MatrixXd Di_tau = Di_tau_a.array() * Bi_tau.array(); 
+taurz << Ai_tau, Bi_tau, Ci_tau, Di_tau, Ai_tau2, Bi_tau2, Ci_tau2, Di_tau2;   
 
-i = i.array() + 1;
-j = j.array() + 1;       
+MatrixXd taurz1(taurz.rows(),taurz.cols()) ;
+MatrixXd taurz2(taurz.rows(),taurz.cols()) ;
+//...................................................Frictionless...............................................................................
+if (iitpave.bond == "Frictionless") {
 
-MatrixXd Ai_tauplus1 = VectorXd::Ones(n-1)*ONES;
+Ai_tau = VectorXd::Ones(n-1)*ONES;
 
-MatrixXd Bi_tauplus1_temp = -(lam(i.array()) - lam(j.array())); Bi_tauplus1_temp = Bi_tauplus1_temp*m;
+Bi_tau_a = -(lam(i.array()) - lam(im)) *m ; 
+Bi_tau = -Bi_tau_a.array().exp() ;//-exp(-(lam(i)-lam(i-1))*m)  
 
-MatrixXd Bi_tauplus1 = Bi_tauplus1_temp.array().exp(); Bi_tauplus1 = Bi_tauplus1 * 0;
+Ci_tau = 2 * nu(j.array()) * ONES + lam(i.array()) * m ;  //(2*nu(j)*ONES+lam(i)*m)     
 
-MatrixXd Ci_tauplus1_a =  2*nu(j.array())*ONES; 
+Di_tau_a = 2*nu(j.array())*ONES - lam(i.array()) * m ;
+Di_tau_b = - (lam(i.array()) - lam(im.array())) * m ;Di_tau_b = Di_tau_b.array().exp() ;
+Di_tau = Di_tau_a.array() * Di_tau_b.array() ;
 
-MatrixXd Ci_tauplus1 = Ci_tauplus1_a + lam(i.array())*m; Ci_tauplus1 = Ci_tauplus1 * 0; //-(1-2*nu(j)*ONES-lam(i)*m)  
+Ai_tau2 = Ai_tau2.setZero() ;
 
-MatrixXd Di_tauplus1_a =  2*nu(j.array())*ONES; Di_tauplus1_a = Di_tauplus1_a - lam(i.array())*m; //(1-2*nu(j)*ONES+lam(i)*m).*exp(-(lam(i)-lam(i-1))*m)    
-    
-MatrixXd Di_tauplus1 = Di_tauplus1_a.array() * Bi_tauplus1.array(); Di_tauplus1 = Di_tauplus1 * 0;
+Bi_tau2 = Bi_tau2.setZero() ;
 
+Ci_tau2 = Ci_tau2.setZero() ;
+
+Di_tau2 = Di_tau2.setZero() ;
 
 // Combine the matrices
-MatrixXd taurz1(Ai_tau.rows(), Ai_tau.cols() + Bi_tau.cols() + Ci_tau.cols() + Di_tau.cols() + Ai_tauplus1.cols() + Bi_tauplus1.cols() + Ci_tauplus1.cols() + Di_tauplus1.cols());
-taurz1 << Ai_tau, Bi_tau, Ci_tau, Di_tau, Ai_tauplus1, Bi_tauplus1, Ci_tauplus1, Di_tauplus1;
-    } // else {
-    //     // Code to execute if alva.bond is not 'Frictionless'
-    //     std::cout << "The bond type is not frictionless." << std::endl;
-    // }
+//MatrixXd taurz1(Ai_tau.rows(), Ai_tau.cols() + Bi_tau.cols() + Ci_tau.cols() + Di_tau.cols() + Ai_tau2.cols() + Bi_tau2.cols() + Ci_tau2.cols() + Di_tau2.cols());
+
+taurz1 << Ai_tau, Bi_tau, Ci_tau, Di_tau, Ai_tau2, Bi_tau2, Ci_tau2, Di_tau2;  
+
+Ai_tau = Ai_tau.setZero() ;
+Bi_tau = Bi_tau.setZero() ;
+Ci_tau = Ci_tau.setZero() ;
+Di_tau = Di_tau.setZero() ;
+
+Ai_tau2 = -(lam(ip.array()) - lam(i.array())) * m;
+Ai_tau2 = -Ai_tau2.array().exp() ;            
+Bi_tau2 = VectorXd::Ones(n-1)*ONES;
+Ci_tau2_a = -(2*nu(jp.array())*ONES + lam(i.array()) * m ) ;
+Ci_tau2_b = - (lam(ip.array()) - lam(i.array())) * m ;Ci_tau2_b = Ci_tau2_b.array().exp() ;
+Ci_tau2 = Ci_tau2_a.array() * Ci_tau2_b.array() ;
+Di_tau2 = - (2 * nu(jp.array()) * ONES - lam(i.array()) * m) ; 
+
+//MatrixXd taurz2(Ai_tau.rows(), Ai_tau.cols() + Bi_tau.cols() + Ci_tau.cols() + Di_tau.cols() + Ai_tau2.cols() + Bi_tau2.cols() + Ci_tau2.cols() + Di_tau2.cols());
+
+taurz2 << Ai_tau, Bi_tau, Ci_tau, Di_tau, Ai_tau2, Bi_tau2, Ci_tau2, Di_tau2; 
+}
+ //........................................................................................................................................................................
+
+//***Equations based on the vertical displacements****
+MatrixXd Ai_uz = 1 + nu(j.array()).array() ;
+Ai_uz = Ai_uz.array() / E(j.array()).array() ; 
+Ai_uz = Ai_uz * ONES ;
+
+MatrixXd Bi_uz_a =  -Ai_uz ;
+MatrixXd Bi_uz= -(lam(i.array()) - lam(j.array())) * m ; Bi_uz = Bi_uz.array().exp() ;
+Bi_uz = Bi_uz_a.array() * Bi_uz.array() ;  
+
+MatrixXd Ci_uz = -4*nu(j.array())*ONES ; Ci_uz = 2 + Ci_uz.array(); Ci_uz = Ci_uz - lam(i.array()) *m ;
+Ci_uz = - Ai_uz.array() * Ci_uz.array() ;
+
+MatrixXd Di_uz_a = -4*nu(j.array())*ONES ; Di_uz_a = 2 + Di_uz_a.array(); Di_uz_a = Di_uz_a + lam(i.array()) *m ;
+Di_uz_a = - Ai_uz.array() * Di_uz_a.array() ; 
+MatrixXd Di_uz = -(lam(i.array()) - lam(j.array())) * m ; Di_uz = Di_uz.array().exp() ;
+Di_uz = Di_uz_a.array() * Di_uz.array() ;
+
+MatrixXd Ai2_uz_a = 1 + nu(jp.array()).array() ;
+Ai2_uz_a = - Ai2_uz_a.array() / E(jp.array()).array() ; Ai2_uz_a = Ai2_uz_a * ONES ;
+MatrixXd Ai2_uz = -(lam(ip.array()) - lam(i.array())) * m ; Ai2_uz = Ai2_uz.array().exp() ;
+Ai2_uz = Ai2_uz.array() * Ai2_uz_a.array() ;
+
+MatrixXd Bi2_uz = 1 + nu(jp.array()).array() ;
+Bi2_uz = Bi2_uz.array() / E(jp.array()).array() ; 
+Bi2_uz = Bi2_uz * ONES ;                        //(1+nu(j+1))./E(j+1)*ONES........... % B{i+1}
 
 
-    // Print the sizes of Ai, Bi, Ci, and Di
-    std::cout << "Size of Ai: " << Ai.rows() << " x " << Ai.cols() << std::endl;
-    std::cout << "Size of Bi: " << Bi.rows() << " x " << Bi.cols() << std::endl;
-    std::cout << "Size of Ci: " << Ci.rows() << " x " << Ci.cols() << std::endl;
-    std::cout << "Size of Di: " << Di.rows() << " x " << Di.cols() << std::endl;
-    std::cout << "Size of sigmaz: " << sigmaz.rows() << " x " << sigmaz.cols() << std::endl;
+MatrixXd Ci2_uz_a = -4 * nu(jp.array()) * ONES;
+Ci2_uz_a = 2 + Ci2_uz_a.array();
+Ci2_uz_a = Ci2_uz_a - lam(i.array()) * m;
+Ci2_uz_a = Bi2_uz.array() * Ci2_uz_a.array();
 
-     // Print the sizes of Ai, Bi, Ci, and Di
-    std::cout << "Size of Ai_tau: " << Ai_tau.rows() << " x " << Ai_tau.cols() << std::endl;
-    std::cout << "Size of Bi_tau: " << Bi_tau.rows() << " x " << Bi_tau.cols() << std::endl;
-    std::cout << "Size of Ci_atu: " << Ci_tau.rows() << " x " << Ci_tau.cols() << std::endl;
-    std::cout << "Size of Di_tau: " << Di_tau.rows() << " x " << Di_tau.cols() << std::endl;
-    std::cout << "Size of tauz: " << taurz.rows() << " x " << taurz.cols() << std::endl;
-    
+MatrixXd Ci2_uz = -(lam(ip.array()) - lam(i.array())) * m;
+Ci2_uz = Ci2_uz.array().exp();
+Ci2_uz = Ci2_uz_a.array() * Ci2_uz.array();
 
-saveit(taurz);
+MatrixXd Di2_uz_a = 2 - (4 * nu(jp.array()) * ONES).array() ;
+Di2_uz_a = Di2_uz_a + lam(i.array()) * m ;
+MatrixXd Di2_uz = Bi2_uz.array() * Di2_uz_a.array() ;
+
+// Combine the matrices
+MatrixXd uz(Ai_uz.rows(), Ai_uz.cols() + Bi_uz.cols() + Ci_uz.cols() + Di_uz.cols() + Ai2_uz.cols() + Bi2_uz.cols() + Ci2_uz.cols() + Di2_uz.cols());
+
+uz << Ai_uz, Bi_uz, Ci_uz, Di_uz, Ai2_uz, Bi2_uz, Ci2_uz, Di2_uz; 
+
+//Equations based on the radial displacements
+
+MatrixXd Ai_ur = Ai_uz ;
+
+MatrixXd Bi_ur = - Bi_uz ;
+
+MatrixXd Ci_ur = lam(i.array()) * m; Ci_ur = 1 + Ci_ur.array() ;
+Ci_ur = Ai_ur.array() * Ci_ur.array() ;
+
+
+MatrixXd Di_ur_a = 1 + nu(j.array()).array() ;
+Di_ur_a = Di_ur_a.array() / E(j.array()).array() ; 
+Di_ur_a = - Di_ur_a * ONES ;    
+MatrixXd Di_ur_b = lam(i.array()) * m; Di_ur_b = 1 - Di_ur_b.array() ; Di_ur_b = Di_ur_a.array() * Di_ur_b.array() ;
+MatrixXd Di_ur = -(lam(i.array()) - lam(j.array()))*m ; Di_ur = Di_ur.array().exp() ;
+Di_ur = Di_ur_b.array() * Di_ur.array() ;
+MatrixXd Ai2_ur_a = 1 + nu(jp.array()).array() ;
+Ai2_ur_a = - Ai2_ur_a.array() / E(jp.array()).array() ; 
+Ai2_ur_a = Ai2_ur_a * ONES ;
+MatrixXd Ai2_ur_b =  -(lam(ip.array()) - lam(i.array())) * m ; Ai2_ur_b = Ai2_ur_b.array().exp() ;
+MatrixXd Ai2_ur =  Ai2_ur_a.array() * Ai2_ur_b.array() ;
+
+MatrixXd Bi2_ur = 1 + nu(jp.array()).array();
+Bi2_ur = Bi2_ur.array() / E(jp.array()).array();
+Bi2_ur = - Bi2_ur * ONES ;
+
+MatrixXd Ci2_ur_a = 1 + nu(jp.array()).array();
+Ci2_ur_a = -Ci2_ur_a.array() / E(jp.array()).array();
+Ci2_ur_a = Ci2_ur_a * ONES; Ci2_ur_a = Ci2_ur_a.array() * (1 + (lam(i.array()) * m).array()).array();
+MatrixXd Ci2_ur_b =   -(lam(ip.array()) - lam(i.array())) * m ; Ci2_ur_b = Ci2_ur_b.array().exp() ;        //   lam(i.array()) * m;
+MatrixXd Ci2_ur = Ci2_ur_a.array() * Ci2_ur_b.array();
+
+MatrixXd Di2_ur = 1 + nu(jp.array()).array();
+Di2_ur = Di2_ur.array() / E(jp.array()).array();
+Di2_ur = Di2_ur * ONES; 
+Di2_ur = Di2_ur.array() * (1 - (lam(i.array()) * m).array()).array();
+MatrixXd ur(Ai_ur.rows(), Ai_ur.cols() + Bi_ur.cols() + Ci_ur.cols() + Di_ur.cols() + Ai2_ur.cols() + Bi2_ur.cols() + Ci2_ur.cols() + Di2_ur.cols());
+
+ur << Ai_ur, Bi_ur, Ci_ur, Di_ur, Ai2_ur, Bi2_ur, Ci2_ur, Di2_ur;
+
+//Arrange the set of linear matrix system to solve for the parameters Ai, 
+// Bi, Ci and Di
+//Surface boundary conditions
+
+
+//MatrixXd term1 = -m * (lam(1) - lam(0)) ; MatrixXd term2 = 1*0NES ;
+RowVectorXd term1 = (-m * (lam(1) - lam(0))).array().exp() ;
+RowVectorXd term2 = 1* ONES;
+RowVectorXd term3 = -(1 - 2 * nu(0)) * (-m *(lam(1) - lam(0))).array().exp() ;
+RowVectorXd term4 = 1 - (2 * nu(0) * ONES).array() ;
+SparseMatrix<double> term5_temp(1, 4*Lm); term5_temp.reserve(0) ;
+MatrixXd term5_dense = MatrixXd(term5_temp) ;
+RowVectorXd term6 = (2 * nu(0)) * (-m *(lam(1) - lam(0))).array().exp() ;
+RowVectorXd term7 = 2 * nu(0) * ONES ;
+
+
+int rows = 2 * term1.rows();
+int columns = term1.cols() + term2.cols() + term3.cols() + term4.cols() + term5_dense.cols() ;
+MatrixXd BC0(rows, columns);
+
+BC0 << term1, term2, term3, term4, term5_dense, term1, - term2, term6, term7, term5_dense  ;
+
+// All conditions in the intermediate layers
+MatrixXd BCs(sigmaz.rows() + taurz.rows() + uz.rows() + ur.rows(), taurz.cols()) ;
+BCs <<sigmaz,
+      taurz,
+      uz,
+      ur;  
+ if (iitpave.bond == "Frictionless"){
+    BCs <<sigmaz,
+          uz,
+          taurz1,
+          taurz2; 
+
+ }
+
+// When inserting m in order to evaluate BC0 and BCs (=BC), the first 
+// Lm = length(m) columns of BC0 will be exp(-m.*...) with different m 
+// values. The following Lm columns will contain 1 and -1. We want to
+// reorganize such that the first columns contains the equations
+// in BC0 with m(1), the following columns correspond to the equations 
+// in BC0 with the m(2) value etc., i.e., we want to go from
+// BC0 = [exp(-m(1).*...)  exp(-m(2).*...)  exp(-m(3).*...) .. ]
+// to
+// BC0 = [exp(-m(1).*...)  1  -(1-2*nu(1))*exp(-m(1)...) .. ]
+
+// The same reorganization we want to do with the BCs matrix
+// Vectors used to change the the column sequence are denoted indx_c
+
+// indx(:)' = [0 0 0 .. 1 1 1 .. 2 2 2 .. Lm-1 Lm-1 Lm-1]: 
+// 8 = number of equations (=columns) in BCs for one m-value
+    // Create an Eigen VectorXd with linearly spaced values from start to end
+
+int start; int end; int step; int totalElements;
+
+// RowVectorXi vec = RowVectorXi::LinSpaced(Lm , 0, Lm - 1 ) ;
+// MatrixXi indx_c = LinSeq(0, Lm,(8-1)*Lm +1) ;
+
+start  = 1 ; step = Lm ; end  = (8 - 1) * Lm + 1 ;
+
+totalElements =  (end - start)/ step ; totalElements = totalElements + 1 ;
+
+RowVectorXi vec1 = RowVectorXi::LinSpaced(totalElements, start, end ) ;
+
+RowVectorXi vec2 = RowVectorXi::LinSpaced(Lm , 0, Lm - 1 ) ;
+ 
+MatrixXi indx_c =  repmat(vec1, 1, Lm) + repmat(vec2, 1, 8) ; 
+
+
+// Also the rows of BCs should be reorganized in order for the lambda, nu 
+// and E-values to be in the correct sequence. The index vector for this is
+// denoted indx_r and is defined as
+
+    // Define the matrix
+    Eigen::MatrixXi indx_r(4, n-1);
+
+    indx_r  <<   Eigen::RowVectorXi::LinSpaced(n-1, 1, n-1),
+                 Eigen::RowVectorXi::LinSpaced(n-1, n, 2*n-2),
+                 Eigen::RowVectorXi::LinSpaced(n-1, 2*n-1, 3*n-3),
+                 Eigen::RowVectorXi::LinSpaced(n-1, 3*n-2, 4*n-4);
+
+//Adjusting indices to 0
+    indx_c.array() -= 1;
+    indx_r.array() -= 1;
+// Use indx_c and indx_r to reorganice BCs and BC0 and order them in a
+// united matrix BC. Only the rows of BCs are to be reorganized. BC0 is fine.
+  // Select columns using indices in one statement
+    // Eigen::MatrixXi selected_columns = BC0(Eigen::all, indx_c);
+
+    // MatrixXi BC(BC0.rows() + Bcs.rows(), indx_c.size());
+
+    // BC << BC0(Eigen::all, indx_c),
+           
+           
+
+
+
 
  }
 
