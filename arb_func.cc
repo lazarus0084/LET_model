@@ -363,22 +363,85 @@ MatrixXi indx_c =  repmat(vec1, 1, Lm) + repmat(vec2, 1, 8) ;
 //Adjusting indices to 0
     indx_c.array() -= 1;
     indx_r.array() -= 1;
+
 // Use indx_c and indx_r to reorganice BCs and BC0 and order them in a
 // united matrix BC. Only the rows of BCs are to be reorganized. BC0 is fine.
-  // Select columns using indices in one statement
-    // Eigen::MatrixXi selected_columns = BC0(Eigen::all, indx_c);
+// Select columns using indices in one statement
+// Eigen::MatrixXi selected_columns = BC0(Eigen::all, indx_c);
 
-    // MatrixXi BC(BC0.rows() + Bcs.rows(), indx_c.size());
 
-    // BC << BC0(Eigen::all, indx_c),
+//Eigen::MatrixXd selected = BC0(Eigen::all, indx_c); //BC0(:,indx_c)
+
+
+           // Example row indices
+    Eigen::VectorXi row_indices(3);
+    row_indices << 0, 2, 3;
+
+    // Example column indices
+    Eigen::VectorXi column_indices(3);
+    column_indices << 1, 3, 4;
+
+    // Select rows and columns in one line using permutation matrices
+    //Eigen::MatrixXd selected = BC0(row_indices, Eigen::all)(Eigen::all, column_indices);
            
-           
+
+//  Now we have a matrix BC that contains all the coefficients for each
+//  integration point. BC has 4*n-2 rows (corresponding to the number of
+//  unknowns) and 4*n (the number of unknowns plus 2 - later we reduce this 
+//  to 4*n-2) columns per integration point, i.e. 4*n*Lm columns in
+//  total. Each (4*n-2) x 4*n - referred to as a submatrix, that only 
+//  represents a single integration point. We want to organize all submatrices 
+//  in a diagonal matrix of dimension Lm*(4*n-2) x 4*n*Lm, with each submatrix 
+//  decoupled from the others. 
+
+//  Below and indx vector that inserts the first submatrix in BC into the
+//  right positions in BCg is organized. The way to use indx is in the 
+//  following way: BCg(indx) = BC(:)
+
+//  indx for a single submatrix - step 1 of 5
+
+vec1 = Eigen::RowVectorXi::LinSpaced(4*n-2, 1, 4*n-2) ;
+
+MatrixXi indx = repmat( vec1 , 8, 1).transpose() ; // Indices on all cells in a single matrix. 
+                                                                              //We have (4*n-2)*8 coefficients in a single 
+                                                                              //sub matrix to fill in into the global matrix
+
+// Additional content to indx is given (step 2 of 5). Two vectors a and c are 
+// defined
+vec1 = RowVectorXi::LinSpaced(8, 0, 7) ;
+MatrixXi a = repmat(vec1,4*n-2,1);
+
+start  = 0 ; step = 4 ; end  = 4*(n-2);
+totalElements =  (end - start)/ step ; totalElements = totalElements + 1 ;
+vec1 = RowVectorXi::LinSpaced(totalElements, start, end ) ;
+
+VectorXi temp_var =  repmat(vec1,4,1).reshaped(4*vec1.size(),1);
+VectorXi zerosVector = VectorXi::Zero(2); // Vector of zeros
+
+    // Combine these vectors into a single vector
+
+VectorXi arg(2 + 4*vec1.size()) ; // Size of the resulting vector
+arg << zerosVector, temp_var;
+MatrixXi c = repmat(arg, 8, 1);
+
+//  Add vectors a and c to indx (step 3 of 5) - the content of indx will then
+//  represent the indeces for the first submatrix in the BCs matrix for a 
+//  single submatrix (the first one only)
+
+//indx = indx(:) + (a(:)+c)*(4*n-2)*Lm;
+
+indx = indx.reshaped(indx.size(),1) + (a.reshaped(a.size(),1) + c) * (4*n-2) *Lm ;
+
+// Now indx is expanded to consider all Lm submatrices. A vector b is
+// organized (step 4 of 5)
+vec1 = RowVectorXi::LinSpaced(Lm, 0, Lm-1) ;
+MatrixXi b = repmat(vec1, indx.size(), 1) ;
 
 
+// % Organize indx for all submatrices (step 5 of 5)
+// indx = repmat(indx,Lm,1); //+ b(:)*(4*n*Lm+1)*(4*n-2);
 
-
- }
-
+}
 
 
 

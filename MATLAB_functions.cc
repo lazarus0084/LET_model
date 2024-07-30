@@ -49,6 +49,19 @@ MatrixXi repmat(const RowVectorXi& mat, int rows, int cols) {
 
     return result;
 }
+// Function overload for VectorXi
+MatrixXi repmat(const VectorXi& mat, int rows, int cols) {
+    int size = mat.size();
+    MatrixXi result(size * rows, cols);
+
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            result.block(i * size, j, size, 1) = mat;
+        }
+    }
+
+    return result;
+}
 
 // Function overload for MatrixXd
 MatrixXd repmat(const MatrixXd& mat, int rows, int cols) {

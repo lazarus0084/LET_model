@@ -171,6 +171,7 @@ MatrixXd repmat(const VectorXd& mat, int rows, int cols);
 MatrixXd repmat(const RowVectorXd& mat, int rows, int cols);
 MatrixXd repmat(const MatrixXd& mat, int rows, int cols);
 MatrixXi repmat(const RowVectorXi& mat, int rows, int cols);
+MatrixXi repmat(const VectorXi& mat, int rows, int cols) ;
 
 MatrixXd LinSeq(int j, int k);
 MatrixXd LinSeq(int j, int i, int k);
