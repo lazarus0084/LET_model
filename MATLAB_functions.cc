@@ -77,6 +77,20 @@ MatrixXd repmat(const MatrixXd& mat, int rows, int cols) {
 
     return result;
 }
+MatrixXi repmat(const MatrixXi& mat, int rows, int cols) {
+    int numRows = mat.rows();
+    int numCols = mat.cols();
+    MatrixXi result(numRows * rows, numCols * cols);
+
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            result.block(i * numRows, j * numCols, numRows, numCols) = mat;
+        }
+    }
+
+    return result;
+}
+
 
 // Function to generate a sequence j:k
 MatrixXd LinSeq(int j, int k) {
@@ -242,4 +256,9 @@ MatrixXd linearIndexing(const MatrixXd &A, const MatrixXd &B) {
 
     return C;
 }
-
+// Function to create an empty sparse matrix with reserved space
+Eigen::SparseMatrix<double> spalloc(int m, int n, int nzmax) {
+Eigen::SparseMatrix<double> s(m, n);
+    s.reserve(nzmax);
+    return s;
+}

@@ -9,6 +9,7 @@
 #include <math.h>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+#include <complex>
 #include <algorithm>
 
 
@@ -162,7 +163,7 @@ void readInputFile(int &numLayers, int &numLoads, int &numPoints, vector<Layer> 
 void init_LET(Pave& iitpave);
 MatrixXd numint_coeff(int N, int n, MatrixXd Xp, MatrixXd Xl, double H ,float a);
 MatrixXd besselroots(int o, int N, int k);
-void arb_func(int n, const VectorXd& zi_temp, const VectorXd& E, const VectorXd& nu, const Pave& iitpave);
+void arb_func(int n, const VectorXd& zi, const VectorXd& E, const VectorXd& nu, const Pave& iitpave);
 
 //*MATLAB Function prototypes*/
 MatrixXd repmat(int mat, int rows, int cols);
@@ -172,6 +173,7 @@ MatrixXd repmat(const RowVectorXd& mat, int rows, int cols);
 MatrixXd repmat(const MatrixXd& mat, int rows, int cols);
 MatrixXi repmat(const RowVectorXi& mat, int rows, int cols);
 MatrixXi repmat(const VectorXi& mat, int rows, int cols) ;
+MatrixXi repmat(const MatrixXi& mat, int rows, int cols) ;
 
 MatrixXd LinSeq(int j, int k);
 MatrixXd LinSeq(int j, int i, int k);
@@ -188,3 +190,5 @@ void saveit(const Eigen::MatrixXd& mat);
 void saveit(const Eigen::MatrixXi& mat) ;
 MatrixXd linearIndexing(const MatrixXd &A, const MatrixXd &B) ;
 pair<MatrixXd, MatrixXd> lookup_gauss(int n, const VectorXd& a, const VectorXd& b);
+
+Eigen::SparseMatrix<double> spalloc(int m, int n, int nzmax);

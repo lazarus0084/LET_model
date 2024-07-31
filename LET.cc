@@ -9,18 +9,19 @@ void init_LET(Pave& iitpave) {
    //MatrixXd a = iitpave.a.transpose();   // Transpose Load radii
     VectorXd E  = iitpave.E;   // Transpose Layer Young's moduli
     VectorXd nu = iitpave.nu; // Transpose Layer Poisson's ratios
-    RowVectorXd zi_temp = iitpave.zi.transpose(); // // Define H as the last element of zi
-
-    
-   double H = zi_temp(zi_temp.size() - 2); //Thickness of last layer above subgrade
-   double Laml = zi_temp(0)/H ; //Relative height of top layer
-   iitpave.Laml = Laml ; iitpave.H = H ;
+    //RowVectorXd zi = iitpave.zi.transpose(); // // Define H as the last element of zi
+    VectorXd zi(2);
+    zi << 260,760;
+    cout << "Forced populating zi LET.CC line 15." << endl ;
+    double H = zi(zi.size() - 2); //Thickness of last layer above subgrade
+    double Laml = zi(0)/ H ; //Relative height of top layer
+    iitpave.Laml = Laml ; iitpave.H = H ;
    
-   MatrixXd XipWip = numint_coeff(N, n, Xp, Xl, H , a);  //*filename XipWip sIntegration points and weights
+ MatrixXd XipWip = numint_coeff(N, n, Xp, Xl, H , a);  //*filename XipWip sIntegration points and weights
 //    // Display size of XipWip
 // cout << "Size of XipWip: " << XipWip.rows() << " rows x " << XipWip.cols() << " columns." << endl;
 // cout << "Element at (4, 6): " << XipWip(9, 42) << endl;
-arb_func(E.size(),zi_temp,E,nu,iitpave);
+arb_func(E.size(),zi,E,nu,iitpave);
 
 }
 

@@ -1,6 +1,6 @@
 #include "iitpave2.h"
 
-void arb_func(int n, const VectorXd& zi_temp, const VectorXd& E, const VectorXd& nu, const Pave& iitpave) {
+void arb_func(int n, const VectorXd& zi, const VectorXd& E, const VectorXd& nu, const Pave& iitpave) {
     
 //------------------------------------------------------------------------------
 // DESCRIPTION:
@@ -22,8 +22,6 @@ void arb_func(int n, const VectorXd& zi_temp, const VectorXd& E, const VectorXd&
 
     // Print the initial zi vector
  
-    VectorXd zi(2);
-    zi << 260,760;
    
 
 RowVectorXd m(96);
@@ -295,11 +293,33 @@ RowVectorXd term6 = (2 * nu(0)) * (-m *(lam(1) - lam(0))).array().exp() ;
 RowVectorXd term7 = 2 * nu(0) * ONES ;
 
 
-int rows = 2 * term1.rows();
-int columns = term1.cols() + term2.cols() + term3.cols() + term4.cols() + term5_dense.cols() ;
-MatrixXd BC0(rows, columns);
+ // Create temporary dense matrix for BC0
+    int rows = 2 * term1.rows();
+    int columns = term1.cols() + term2.cols() + term3.cols() + term4.cols();
+    MatrixXd BC0_temp(2 * term1.rows(), term1.cols() + term2.cols() + term3.cols() + term4.cols());
 
-BC0 << term1, term2, term3, term4, term5_dense, term1, - term2, term6, term7, term5_dense  ;
+    BC0_temp << term1, term2, term3, term4, term1, -term2, term6, term7;
+
+    // Convert dense matrix BC0_temp to a sparse matrix
+    SparseMatrix<double> BC0_temp_sparse = BC0_temp.sparseView();
+    SparseMatrix<double> SparseAllocation = spalloc(2, 4 * Lm, 0);
+
+    // Create a new sparse matrix BC0 for the concatenation
+    SparseMatrix<double> BC0(BC0_temp_sparse.rows(), BC0_temp_sparse.cols() + SparseAllocation.cols());
+
+    // Copy BC0_temp_sparse into the new sparse matrix BC0
+    for (int k = 0; k < BC0_temp_sparse.outerSize(); ++k) {
+        for (SparseMatrix<double>::InnerIterator it(BC0_temp_sparse, k); it; ++it) {
+            BC0.insert(it.row(), it.col()) = it.value();
+        }
+    }
+
+    // Copy SparseAllocation into the new sparse matrix BC0 (starting from the last column of BC0_temp_sparse)
+    for (int k = 0; k < SparseAllocation.outerSize(); ++k) {
+        for (SparseMatrix<double>::InnerIterator it(SparseAllocation, k); it; ++it) {
+            BC0.insert(it.row(), it.col() + BC0_temp_sparse.cols()) = it.value();
+        }
+    }
 
 // All conditions in the intermediate layers
 MatrixXd BCs(sigmaz.rows() + taurz.rows() + uz.rows() + ur.rows(), taurz.cols()) ;
@@ -437,9 +457,15 @@ indx = indx.reshaped(indx.size(),1) + (a.reshaped(a.size(),1) + c) * (4*n-2) *Lm
 vec1 = RowVectorXi::LinSpaced(Lm, 0, Lm-1) ;
 MatrixXi b = repmat(vec1, indx.size(), 1) ;
 
+indx = repmat(indx, Lm, 1) + b.reshaped(b.size(),1)*(4*n*Lm+1)*(4*n-2) ;
+// Insert BC content into BCg in the right positions
+// tic
+// BCg(indx) = BC; % corresponds to BCg(indx) = BC(:)
+// time_BCg=toc
+// Indices to subindeces
 
-// % Organize indx for all submatrices (step 5 of 5)
-// indx = repmat(indx,Lm,1); //+ b(:)*(4*n*Lm+1)*(4*n-2);
+// [I,J] = ind2sub([Lm*(4*n-2) 4*n*Lm],indx);
+// BCg   = sparse(I,J,BC,Lm*(4*n-2),4*n*Lm);
 
 }
 
