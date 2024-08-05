@@ -131,6 +131,7 @@ MatrixXd getSubMatrix(const MatrixXd& Mat, const VectorXd& indices) {
 
     return submatrix;
 }
+
 MatrixXd GetColumn(const MatrixXd& Xp, const std::string& row_index, int column_index) {
     int rows = Xp.rows();
     int cols = Xp.cols();
@@ -261,4 +262,100 @@ Eigen::SparseMatrix<double> spalloc(int m, int n, int nzmax) {
 Eigen::SparseMatrix<double> s(m, n);
     s.reserve(nzmax);
     return s;
+}
+
+// Function to concatenate two sparse matrices either horizontally or vertically
+SparseMatrix<double> SparseConcatenate(const SparseMatrix<double>& A, const SparseMatrix<double>& B) {
+    // Check if the matrices have the same number of rows (horizontal concatenation)
+    if (A.rows() == B.rows()) {
+        SparseMatrix<double> C(A.rows(), A.cols() + B.cols());
+        // Insert elements from A
+        for (int k = 0; k < A.outerSize(); ++k) {
+            for (SparseMatrix<double>::InnerIterator it(A, k); it; ++it) {
+                C.insert(it.row(), it.col()) = it.value();
+            }
+        }
+        // Insert elements from B
+        for (int k = 0; k < B.outerSize(); ++k) {
+            for (SparseMatrix<double>::InnerIterator it(B, k); it; ++it) {
+                C.insert(it.row(), it.col() + A.cols()) = it.value();
+            }
+        }
+        return C;
+    } 
+    // Check if the matrices have the same number of columns (vertical concatenation)
+    else if (A.cols() == B.cols()) {
+        SparseMatrix<double> C(A.rows() + B.rows(), A.cols());
+        // Insert elements from A
+        for (int k = 0; k < A.outerSize(); ++k) {
+            for (SparseMatrix<double>::InnerIterator it(A, k); it; ++it) {
+                C.insert(it.row(), it.col()) = it.value();
+            }
+        }
+        // Insert elements from B
+        for (int k = 0; k < B.outerSize(); ++k) {
+            for (SparseMatrix<double>::InnerIterator it(B, k); it; ++it) {
+                C.insert(it.row() + A.rows(), it.col()) = it.value();
+            }
+        }
+        return C;
+    } 
+    else {
+        throw std::invalid_argument("Matrices dimensions are not compatible for concatenation");
+    }
+}
+
+// Function to convert linear indices to row and column indices
+MatrixXi ind2sub(int rows, int columns, const VectorXi& linear_indices) {
+    // Size of the input vector
+    int num_indices = linear_indices.size();
+
+    // Vectors to store row and column indices
+    VectorXi row_indices(num_indices);
+    VectorXi col_indices(num_indices);
+
+    // Compute row and column indices
+    for (int i = 0; i < num_indices; ++i) {
+        int idx = linear_indices(i);
+        row_indices(i) = (idx - 1) % rows + 1; // MATLAB 1-based indexing for rows
+        col_indices(i) = (idx - 1) / rows + 1; // MATLAB 1-based indexing for columns
+    }
+
+    // Create a matrix to hold row and column indices
+    MatrixXi indices_matrix(num_indices, 2);
+    indices_matrix.col(0) = row_indices;
+    indices_matrix.col(1) = col_indices;
+
+    return indices_matrix;
+}
+
+SparseMatrix<double> extractSparseSubMat(const SparseMatrix<double>& BC0, 
+                                         const VectorXi& row_indices, 
+                                         const VectorXi& column_indices) {
+    // Determine the size of the submatrix
+    int rows = row_indices.size();
+    int cols = column_indices.size();
+    
+    // Create a sparse matrix to hold the submatrix
+    SparseMatrix<double> submatrix(rows, cols);
+
+    // Create a triplet list to construct the submatrix
+    std::vector<Triplet<double>> tripletList;
+    
+    // Loop over the given row and column indices to extract the submatrix
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            // Get the value from the original matrix
+            double value = BC0.coeff(row_indices[i], column_indices[j]);
+            if (value != 0.0) {
+                // Add the non-zero value to the triplet list
+                tripletList.emplace_back(i, j, value);
+            }
+        }
+    }
+
+    // Construct the sparse submatrix from the triplet list
+    submatrix.setFromTriplets(tripletList.begin(), tripletList.end());
+    
+    return submatrix;
 }

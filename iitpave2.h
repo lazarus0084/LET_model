@@ -192,3 +192,13 @@ MatrixXd linearIndexing(const MatrixXd &A, const MatrixXd &B) ;
 pair<MatrixXd, MatrixXd> lookup_gauss(int n, const VectorXd& a, const VectorXd& b);
 
 Eigen::SparseMatrix<double> spalloc(int m, int n, int nzmax);
+SparseMatrix<double> SparseConcatenate(const SparseMatrix<double>& A, const SparseMatrix<double>& B);
+SparseMatrix<double> extractSubmatrix(const Eigen::SparseMatrix<double>& matrix,    const Eigen::VectorXi& rowIndices,   const Eigen::VectorXi& colIndices);
+ 
+MatrixXi ind2sub(int rows, int columns, const VectorXi& linear_indices) ;
+
+SparseMatrix<double> extractSparseSubMat(const SparseMatrix<double>& BC0, 
+                                         const VectorXi& row_indices, 
+                                         const VectorXi& column_indices) ;
+
+ 

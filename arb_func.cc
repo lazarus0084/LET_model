@@ -287,8 +287,6 @@ RowVectorXd term1 = (-m * (lam(1) - lam(0))).array().exp() ;
 RowVectorXd term2 = 1* ONES;
 RowVectorXd term3 = -(1 - 2 * nu(0)) * (-m *(lam(1) - lam(0))).array().exp() ;
 RowVectorXd term4 = 1 - (2 * nu(0) * ONES).array() ;
-SparseMatrix<double> term5_temp(1, 4*Lm); term5_temp.reserve(0) ;
-MatrixXd term5_dense = MatrixXd(term5_temp) ;
 RowVectorXd term6 = (2 * nu(0)) * (-m *(lam(1) - lam(0))).array().exp() ;
 RowVectorXd term7 = 2 * nu(0) * ONES ;
 
@@ -303,23 +301,13 @@ RowVectorXd term7 = 2 * nu(0) * ONES ;
     // Convert dense matrix BC0_temp to a sparse matrix
     SparseMatrix<double> BC0_temp_sparse = BC0_temp.sparseView();
     SparseMatrix<double> SparseAllocation = spalloc(2, 4 * Lm, 0);
+    SparseMatrix<double> BC0 = SparseConcatenate(BC0_temp_sparse, SparseAllocation) ;
 
-    // Create a new sparse matrix BC0 for the concatenation
-    SparseMatrix<double> BC0(BC0_temp_sparse.rows(), BC0_temp_sparse.cols() + SparseAllocation.cols());
-
-    // Copy BC0_temp_sparse into the new sparse matrix BC0
-    for (int k = 0; k < BC0_temp_sparse.outerSize(); ++k) {
-        for (SparseMatrix<double>::InnerIterator it(BC0_temp_sparse, k); it; ++it) {
-            BC0.insert(it.row(), it.col()) = it.value();
-        }
-    }
-
-    // Copy SparseAllocation into the new sparse matrix BC0 (starting from the last column of BC0_temp_sparse)
-    for (int k = 0; k < SparseAllocation.outerSize(); ++k) {
-        for (SparseMatrix<double>::InnerIterator it(SparseAllocation, k); it; ++it) {
-            BC0.insert(it.row(), it.col() + BC0_temp_sparse.cols()) = it.value();
-        }
-    }
+    // for (int k = 0; k < BC0.outerSize(); ++k) {
+    //     for (SparseMatrix<double>::InnerIterator it(BC0, k); it; ++it) {
+    //         std::cout << "(" << it.row() << ", " << it.col() << ") " << it.value() << std::endl;
+    //     }
+    // }
 
 // All conditions in the intermediate layers
 MatrixXd BCs(sigmaz.rows() + taurz.rows() + uz.rows() + ur.rows(), taurz.cols()) ;
@@ -365,7 +353,8 @@ RowVectorXi vec1 = RowVectorXi::LinSpaced(totalElements, start, end ) ;
 
 RowVectorXi vec2 = RowVectorXi::LinSpaced(Lm , 0, Lm - 1 ) ;
  
-MatrixXi indx_c =  repmat(vec1, 1, Lm) + repmat(vec2, 1, 8) ; 
+
+MatrixXi indx_c =  repmat(vec1, 1, Lm) + repmat(vec2, 8, 1).reshaped(1,vec2.size()*8*1) ;
 
 
 // Also the rows of BCs should be reorganized in order for the lambda, nu 
@@ -381,29 +370,29 @@ MatrixXi indx_c =  repmat(vec1, 1, Lm) + repmat(vec2, 1, 8) ;
                  Eigen::RowVectorXi::LinSpaced(n-1, 3*n-2, 4*n-4);
 
 //Adjusting indices to 0
-    indx_c.array() -= 1;
-    indx_r.array() -= 1;
+
+indx_c.array() -= 1;
+indx_r.array() -= 1;
 
 // Use indx_c and indx_r to reorganice BCs and BC0 and order them in a
 // united matrix BC. Only the rows of BCs are to be reorganized. BC0 is fine.
 // Select columns using indices in one statement
-// Eigen::MatrixXi selected_columns = BC0(Eigen::all, indx_c);
+VectorXi indx_r_linear =  indx_r.reshaped(indx_r.size(),1) ;
+VectorXi indx_c_linear =  indx_c.reshaped(indx_c.size(),1) ;
+VectorXi row_indices = VectorXi::LinSpaced(BC0.rows(), 0, BC0.rows() - 1) ;  // Generate row indices using LinSpaced
+ 
+// Now extract the submatrix
+SparseMatrix<double> submatrix1 = extractSparseSubMat(BC0, row_indices, indx_c_linear) ;
+
+SparseMatrix<double> submatrix2 = BCs(indx_r_linear, indx_c_linear).sparseView() ;
 
 
-//Eigen::MatrixXd selected = BC0(Eigen::all, indx_c); //BC0(:,indx_c)
+SparseMatrix<double> BC = SparseConcatenate(submatrix1,submatrix2); //BC = [BC0(:,indx_c); BCs(indx_r(:),indx_c)];
 
-
-           // Example row indices
-    Eigen::VectorXi row_indices(3);
-    row_indices << 0, 2, 3;
-
-    // Example column indices
-    Eigen::VectorXi column_indices(3);
-    column_indices << 1, 3, 4;
-
-    // Select rows and columns in one line using permutation matrices
-    //Eigen::MatrixXd selected = BC0(row_indices, Eigen::all)(Eigen::all, column_indices);
-           
+cout << "size of sub1:" <<  submatrix1.rows() << "x" << submatrix1.cols() << endl ;
+cout << "size of sub2:" <<  submatrix2.rows() << "x" << submatrix2.cols() << endl ;
+cout << "size of BC:" <<  BC.rows() << "x" << BC.cols() << endl ;
+//cout << "size of denseMatrix:" <<  denseMatrix.rows() << "x" << denseMatrix.cols() << endl ;
 
 //  Now we have a matrix BC that contains all the coefficients for each
 //  integration point. BC has 4*n-2 rows (corresponding to the number of
@@ -458,16 +447,58 @@ vec1 = RowVectorXi::LinSpaced(Lm, 0, Lm-1) ;
 MatrixXi b = repmat(vec1, indx.size(), 1) ;
 
 indx = repmat(indx, Lm, 1) + b.reshaped(b.size(),1)*(4*n*Lm+1)*(4*n-2) ;
+VectorXi indx_linear = indx ;
 // Insert BC content into BCg in the right positions
 // tic
 // BCg(indx) = BC; % corresponds to BCg(indx) = BC(:)
-// time_BCg=toc
+// time_BCg=to
 // Indices to subindeces
+//cout << indx << endl ;s
+ // Call the function to get the concatenated matrix
+MatrixXi subindeces = ind2sub(Lm*(4*n-2), 4*n*Lm, indx_linear);//[I,J] = ind2sub([Lm*(4*n-2) 4*n*Lm],indx);
+// BCg   = sparse(I,J,BC,Lm*(4*n-2),4*n*Lm);!!!!!!!!!!!!!!!!!!!INCOMPLETE 
+// Define the size of the sparse matrix
+    rows = Lm*(4*n-2) ;
+    int cols = 4*n*Lm ;
 
-// [I,J] = ind2sub([Lm*(4*n-2) 4*n*Lm],indx);
-// BCg   = sparse(I,J,BC,Lm*(4*n-2),4*n*Lm);
+    // Define the row indices, column indices, and values of the non-zero elements directly as Eigen::VectorXi
+    row_indices = subindeces.col(0) ;
+    VectorXi col_indices = subindeces.col(1) ;
+    row_indices.array() -= 1;
+    col_indices.array() -= 1;
+    VectorXd BC_linear = BC.toDense().reshaped(BC.rows() * BC.cols(), 1) ;
+   
+       // Convert VectorXd to SparseVector<double> in one line
+    SparseVector<double> values = BC_linear.sparseView();
 
+    // Create a vector of triplets to store the non-zero entries
+    std::vector<Eigen::Triplet<double>> tripletList;
+    for (int i = 0; i < values.size(); ++i) {
+        tripletList.push_back(Eigen::Triplet<double>(row_indices(i), col_indices(i), values[i]));
+    }
+
+    // Create the sparse matrix and populate it with the triplets
+    Eigen::SparseMatrix<double> BCg(rows, cols);
+    BCg.setFromTriplets(tripletList.begin(), tripletList.end());
+
+    // Optional: Compress the matrix
+    BCg.makeCompressed();
+
+//We now need to remove the the columns corresponding to the coefficients 
+//An and Cn from each submatrix in BCg. The vector for this is denoted
+//indx_cr and is defined as
+
+start  = 4*n-3 ; step = 4*n ; end  = 4*n*Lm-3 ;
+totalElements =  (end - start)/ step ; totalElements = totalElements + 1 ;
+vec1 = RowVectorXi::LinSpaced(totalElements, start, end ) ;
+
+
+start  = 4*n-1 ; step = 4*n ; end  = 4*n*Lm-1;
+totalElements =  (end - start)/ step ; totalElements = totalElements + 1 ;
+vec2 = RowVectorXi::LinSpaced(totalElements, start, end ) ;
+MatrixXi indx_cr(vec1.rows() + vec2.rows(), vec1.cols());
+indx_cr << vec1,
+           vec2; //indx_cr = [4*n-3:4*n:4*n*Lm-3; 4*n-1:4*n:4*n*Lm-1];
+saveit(indx_cr) ;
 }
-
-
 
