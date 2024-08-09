@@ -11,7 +11,7 @@
 #include <Eigen/Sparse>
 #include <complex>
 #include <algorithm>
-
+#include <cassert>
 
 #ifndef M_PI
     #define M_PI 3.14159265358979323846
@@ -192,7 +192,8 @@ MatrixXd linearIndexing(const MatrixXd &A, const MatrixXd &B) ;
 pair<MatrixXd, MatrixXd> lookup_gauss(int n, const VectorXd& a, const VectorXd& b);
 
 Eigen::SparseMatrix<double> spalloc(int m, int n, int nzmax);
-SparseMatrix<double> SparseConcatenate(const SparseMatrix<double>& A, const SparseMatrix<double>& B);
+SparseMatrix<double> H_SparseConcatenate(const SparseMatrix<double>& A, const SparseMatrix<double>& B) ;
+SparseMatrix<double> V_SparseConcatenate(const SparseMatrix<double>& A, const SparseMatrix<double>& B)  ;
 SparseMatrix<double> extractSubmatrix(const Eigen::SparseMatrix<double>& matrix,    const Eigen::VectorXi& rowIndices,   const Eigen::VectorXi& colIndices);
  
 MatrixXi ind2sub(int rows, int columns, const VectorXi& linear_indices) ;

@@ -301,7 +301,7 @@ RowVectorXd term7 = 2 * nu(0) * ONES ;
     // Convert dense matrix BC0_temp to a sparse matrix
     SparseMatrix<double> BC0_temp_sparse = BC0_temp.sparseView();
     SparseMatrix<double> SparseAllocation = spalloc(2, 4 * Lm, 0);
-    SparseMatrix<double> BC0 = SparseConcatenate(BC0_temp_sparse, SparseAllocation) ;
+    SparseMatrix<double> BC0 = H_SparseConcatenate(BC0_temp_sparse, SparseAllocation) ;
 
     // for (int k = 0; k < BC0.outerSize(); ++k) {
     //     for (SparseMatrix<double>::InnerIterator it(BC0, k); it; ++it) {
@@ -387,12 +387,7 @@ SparseMatrix<double> submatrix1 = extractSparseSubMat(BC0, row_indices, indx_c_l
 SparseMatrix<double> submatrix2 = BCs(indx_r_linear, indx_c_linear).sparseView() ;
 
 
-SparseMatrix<double> BC = SparseConcatenate(submatrix1,submatrix2); //BC = [BC0(:,indx_c); BCs(indx_r(:),indx_c)];
-
-cout << "size of sub1:" <<  submatrix1.rows() << "x" << submatrix1.cols() << endl ;
-cout << "size of sub2:" <<  submatrix2.rows() << "x" << submatrix2.cols() << endl ;
-cout << "size of BC:" <<  BC.rows() << "x" << BC.cols() << endl ;
-//cout << "size of denseMatrix:" <<  denseMatrix.rows() << "x" << denseMatrix.cols() << endl ;
+SparseMatrix<double> BC = V_SparseConcatenate(submatrix1,submatrix2); //BC = [BC0(:,indx_c); BCs(indx_r(:),indx_c)];
 
 //  Now we have a matrix BC that contains all the coefficients for each
 //  integration point. BC has 4*n-2 rows (corresponding to the number of
@@ -456,33 +451,33 @@ VectorXi indx_linear = indx ;
 //cout << indx << endl ;s
  // Call the function to get the concatenated matrix
 MatrixXi subindeces = ind2sub(Lm*(4*n-2), 4*n*Lm, indx_linear);//[I,J] = ind2sub([Lm*(4*n-2) 4*n*Lm],indx);
+
 // BCg   = sparse(I,J,BC,Lm*(4*n-2),4*n*Lm);!!!!!!!!!!!!!!!!!!!INCOMPLETE 
-// Define the size of the sparse matrix
-    rows = Lm*(4*n-2) ;
-    int cols = 4*n*Lm ;
+    
+ // Define the sparse BCg
+ Eigen::SparseMatrix<double> BCg(Lm * (4 * n - 2), 4 * n * Lm);
 
-    // Define the row indices, column indices, and values of the non-zero elements directly as Eigen::VectorXi
-    row_indices = subindeces.col(0) ;
-    VectorXi col_indices = subindeces.col(1) ;
-    row_indices.array() -= 1;
-    col_indices.array() -= 1;
-    VectorXd BC_linear = BC.toDense().reshaped(BC.rows() * BC.cols(), 1) ;
-   
-       // Convert VectorXd to SparseVector<double> in one line
-    SparseVector<double> values = BC_linear.sparseView();
+// Flatten the sparse matrix to a VectorXd
+ VectorXd flatVec = BC.toDense().reshaped(BC.size(), 1) ;
 
-    // Create a vector of triplets to store the non-zero entries
+row_indices = subindeces.col(0).array() - 1;
+
+VectorXi col_indices = subindeces.col(1).array() - 1;
+
+ // Create a vector of triplets
     std::vector<Eigen::Triplet<double>> tripletList;
-    for (int i = 0; i < values.size(); ++i) {
-        tripletList.push_back(Eigen::Triplet<double>(row_indices(i), col_indices(i), values[i]));
+    tripletList.reserve(flatVec.size());
+
+
+// Filling the triplet list with the given row_indices, column_indices, and values
+    for (int i = 0; i < flatVec.size(); ++i) {
+        tripletList.emplace_back(row_indices[i], col_indices[i], flatVec[i]);
     }
 
-    // Create the sparse matrix and populate it with the triplets
-    Eigen::SparseMatrix<double> BCg(rows, cols);
+    // Populate the sparse matrix using the triplet list
     BCg.setFromTriplets(tripletList.begin(), tripletList.end());
 
-    // Optional: Compress the matrix
-    BCg.makeCompressed();
+    
 
 //We now need to remove the the columns corresponding to the coefficients 
 //An and Cn from each submatrix in BCg. The vector for this is denoted
@@ -499,6 +494,9 @@ vec2 = RowVectorXi::LinSpaced(totalElements, start, end ) ;
 MatrixXi indx_cr(vec1.rows() + vec2.rows(), vec1.cols());
 indx_cr << vec1,
            vec2; //indx_cr = [4*n-3:4*n:4*n*Lm-3; 4*n-1:4*n:4*n*Lm-1];
-saveit(indx_cr) ;
-}
 
+
+MatrixXd dense = BCg.toDense(); ;
+saveit(dense) ;
+
+}

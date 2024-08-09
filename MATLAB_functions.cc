@@ -264,47 +264,56 @@ Eigen::SparseMatrix<double> s(m, n);
     return s;
 }
 
-// Function to concatenate two sparse matrices either horizontally or vertically
-SparseMatrix<double> SparseConcatenate(const SparseMatrix<double>& A, const SparseMatrix<double>& B) {
-    // Check if the matrices have the same number of rows (horizontal concatenation)
-    if (A.rows() == B.rows()) {
-        SparseMatrix<double> C(A.rows(), A.cols() + B.cols());
-        // Insert elements from A
-        for (int k = 0; k < A.outerSize(); ++k) {
-            for (SparseMatrix<double>::InnerIterator it(A, k); it; ++it) {
-                C.insert(it.row(), it.col()) = it.value();
-            }
-        }
-        // Insert elements from B
-        for (int k = 0; k < B.outerSize(); ++k) {
-            for (SparseMatrix<double>::InnerIterator it(B, k); it; ++it) {
-                C.insert(it.row(), it.col() + A.cols()) = it.value();
-            }
-        }
-        return C;
-    } 
-    // Check if the matrices have the same number of columns (vertical concatenation)
-    else if (A.cols() == B.cols()) {
-        SparseMatrix<double> C(A.rows() + B.rows(), A.cols());
-        // Insert elements from A
-        for (int k = 0; k < A.outerSize(); ++k) {
-            for (SparseMatrix<double>::InnerIterator it(A, k); it; ++it) {
-                C.insert(it.row(), it.col()) = it.value();
-            }
-        }
-        // Insert elements from B
-        for (int k = 0; k < B.outerSize(); ++k) {
-            for (SparseMatrix<double>::InnerIterator it(B, k); it; ++it) {
-                C.insert(it.row() + A.rows(), it.col()) = it.value();
-            }
-        }
-        return C;
-    } 
-    else {
-        throw std::invalid_argument("Matrices dimensions are not compatible for concatenation");
+
+// Function for horizontal concatenation of two sparse matrices
+SparseMatrix<double> H_SparseConcatenate(const SparseMatrix<double>& A, const SparseMatrix<double>& B) {
+    if (A.rows() != B.rows()) {
+        throw std::invalid_argument("Matrices must have the same number of rows for horizontal concatenation");
     }
+
+    SparseMatrix<double> C(A.rows(), A.cols() + B.cols());
+
+    // Insert elements from A
+    for (int k = 0; k < A.outerSize(); ++k) {
+        for (SparseMatrix<double>::InnerIterator it(A, k); it; ++it) {
+            C.insert(it.row(), it.col()) = it.value();
+        }
+    }
+
+    // Insert elements from B
+    for (int k = 0; k < B.outerSize(); ++k) {
+        for (SparseMatrix<double>::InnerIterator it(B, k); it; ++it) {
+            C.insert(it.row(), it.col() + A.cols()) = it.value();
+        }
+    }
+
+    return C;
 }
 
+// Function for vertical concatenation of two sparse matrices
+SparseMatrix<double> V_SparseConcatenate(const SparseMatrix<double>& A, const SparseMatrix<double>& B) {
+    if (A.cols() != B.cols()) {
+        throw std::invalid_argument("Matrices must have the same number of columns for vertical concatenation");
+    }
+
+    SparseMatrix<double> C(A.rows() + B.rows(), A.cols());
+
+    // Insert elements from A
+    for (int k = 0; k < A.outerSize(); ++k) {
+        for (SparseMatrix<double>::InnerIterator it(A, k); it; ++it) {
+            C.insert(it.row(), it.col()) = it.value();
+        }
+    }
+
+    // Insert elements from B
+    for (int k = 0; k < B.outerSize(); ++k) {
+        for (SparseMatrix<double>::InnerIterator it(B, k); it; ++it) {
+            C.insert(it.row() + A.rows(), it.col()) = it.value();
+        }
+    }
+
+    return C;
+}
 // Function to convert linear indices to row and column indices
 MatrixXi ind2sub(int rows, int columns, const VectorXi& linear_indices) {
     // Size of the input vector
