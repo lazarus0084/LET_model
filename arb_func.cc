@@ -496,7 +496,26 @@ indx_cr << vec1,
            vec2; //indx_cr = [4*n-3:4*n:4*n*Lm-3; 4*n-1:4*n:4*n*Lm-1];
 
 
-MatrixXd dense = BCg.toDense(); ;
+
+
+// % Define right-hand side of equations
+// Rhs = [1; spalloc(4*n-3,1,1)];  
+// Rhs = repmat(Rhs,Lm,1);     
+
+// % Evaluate A, B, C and D coefficients from the equation BCg*[A B C D ...]'
+// % = Rhs
+// ABCD0 = BCg\Rhs ;                                                                         
+
+SparseVector <double> Rhs_temp = spalloc(4*n-3, 1, 1) ;
+SparseVector <double> Rhs_zeroth_element(1);
+
+    // Set the value at index 0 to 1
+    Rhs_zeroth_element.insert(0) = 1.0;
+    
+
+SparseVector <double> Rhs = V_SparseConcatenate(Rhs_zeroth_element, Rhs_temp);
+
+MatrixXd dense = Rhs.toDense(); ;
 saveit(dense) ;
 
 }
