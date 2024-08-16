@@ -1,6 +1,6 @@
 #include "iitpave2.h"
 
-void arb_func(int n, const VectorXd& zi, const VectorXd& E, const VectorXd& nu, const Pave& iitpave) {
+int arb_func(int n, const VectorXd& zi, const VectorXd& E, const VectorXd& nu, const Pave& iitpave) {
     
 //------------------------------------------------------------------------------
 // DESCRIPTION:
@@ -454,15 +454,15 @@ MatrixXi subindeces = ind2sub(Lm*(4*n-2), 4*n*Lm, indx_linear);//[I,J] = ind2sub
 
 // BCg   = sparse(I,J,BC,Lm*(4*n-2),4*n*Lm);!!!!!!!!!!!!!!!!!!!INCOMPLETE 
     
- // Define the sparse BCg
- Eigen::SparseMatrix<double> BCg(Lm * (4 * n - 2), 4 * n * Lm);
+// Define the sparse BCg
+ SparseMatrix<double> BCg(Lm * (4 * n - 2), 4 * n * Lm);
 
-// Flatten the sparse matrix to a VectorXd
+// Flatten the sparse matrix to a VectorX
  VectorXd flatVec = BC.toDense().reshaped(BC.size(), 1) ;
 
-row_indices = subindeces.col(0).array() - 1;
+ row_indices = subindeces.col(0).array() - 1;
 
-VectorXi col_indices = subindeces.col(1).array() - 1;
+ VectorXi col_indices = subindeces.col(1).array() - 1;
 
  // Create a vector of triplets
     std::vector<Eigen::Triplet<double>> tripletList;
@@ -476,8 +476,6 @@ VectorXi col_indices = subindeces.col(1).array() - 1;
 
     // Populate the sparse matrix using the triplet list
     BCg.setFromTriplets(tripletList.begin(), tripletList.end());
-
-    
 
 //We now need to remove the the columns corresponding to the coefficients 
 //An and Cn from each submatrix in BCg. The vector for this is denoted
@@ -494,10 +492,42 @@ vec2 = RowVectorXi::LinSpaced(totalElements, start, end ) ;
 MatrixXi indx_cr(vec1.rows() + vec2.rows(), vec1.cols());
 indx_cr << vec1,
            vec2; //indx_cr = [4*n-3:4*n:4*n*Lm-3; 4*n-1:4*n:4*n*Lm-1];
+indx_cr.array() -= 1;
 
+    totalElements ; // Example values
+    start = 0; 
+    step =1;
+    end = BCg.cols();
 
+totalElements =  (end - start)/ step ;
 
+    // Create full_list with linearly spaced values
+    VectorXi full_list = Eigen::VectorXi::LinSpaced(totalElements, start, end );
 
+    VectorXi indx_cr_updated(full_list.size() - indx_cr.size());
+    int counter = 0;
+
+    // Convert Eigen VectorXi indx_cr to std::vector<int>
+    std::vector<int> indx_cr_std(indx_cr.data(), indx_cr.data() + indx_cr.size());
+
+    // Loop through the elements of full_list
+    for (int i = 0; i < full_list.size(); ++i) {
+        // Check if the element is not in the indx_cr list
+        if (std::find(indx_cr_std.begin(), indx_cr_std.end(), full_list(i)) == indx_cr_std.end()) {
+            indx_cr_updated(counter) = full_list(i);
+            ++counter;
+        }
+    }
+      totalElements ; // Example values
+    start = 0; 
+    step =1;
+    end = BCg.rows();
+
+totalElements =  (end - start)/ step ;
+
+    // Create full_list with linearly spaced values
+    VectorXi rowIndices = Eigen::VectorXi::LinSpaced(totalElements, start, end );
+SparseMatrix <double> BCg_updated = extractSparseSubMat(BCg,rowIndices,indx_cr_updated);
 // % Define right-hand side of equations
 // Rhs = [1; spalloc(4*n-3,1,1)];  
 // Rhs = repmat(Rhs,Lm,1);     
@@ -509,13 +539,41 @@ indx_cr << vec1,
 SparseVector <double> Rhs_temp = spalloc(4*n-3, 1, 1) ;
 SparseVector <double> Rhs_zeroth_element(1);
 
-    // Set the value at index 0 to 1
-    Rhs_zeroth_element.insert(0) = 1.0;
+// Set the value at index 0 to 1
+Rhs_zeroth_element.insert(0) = 1.0;
     
 
-SparseVector <double> Rhs = V_SparseConcatenate(Rhs_zeroth_element, Rhs_temp);
+SparseVector <double> Rhs1 = V_SparseConcatenate(Rhs_zeroth_element, Rhs_temp);
+VectorXd Rhs = repmat(Rhs1, Lm, 1).toDense();
 
-MatrixXd dense = Rhs.toDense(); ;
-saveit(dense) ;
+    // Create the solver and compute the LU decomposition
+Eigen::SparseLU<Eigen::SparseMatrix<double>> solver;
+solver.compute(BCg_updated);
 
+    // Solve the system Bcg * ABCD0 = Rhs
+VectorXd ABCD0 = solver.solve(Rhs);
+
+//  Redefine ABCD so that each column represents an integration point. 
+//  Furthermore zero values are introduced fo A and C (which are needed to
+//  generalize the evaluations of sigma and u's in a simple way)
+//  ABCD = reorganize size 
+//ABCD    = zeros(4*n-2,Lm);  
+MatrixXd ABCD(4*n-2,Lm); ABCD.setZero();
+ABCD = Map<MatrixXd>(ABCD0.data(), ABCD.rows(), ABCD.cols());
+MatrixXd ABCD_sub1 = ABCD.block(0,0,ABCD.rows()-2,ABCD.cols());
+MatrixXd ABCD_sub2 = ABCD.row(ABCD.rows()-2);
+MatrixXd ABCD_sub3 = ABCD.row(ABCD.rows()-1);
+MatrixXd zero_sub(1,Lm); zero_sub.setZero();
+//Initializing ABCD_concatated dimenasions
+MatrixXd ABCD_concatated(ABCD_sub1.rows() + zero_sub.rows() + ABCD_sub2.rows() + zero_sub.rows() + ABCD_sub3.rows() + 1, Lm);
+
+
+ABCD_concatated.block(0, 0, ABCD_sub1.rows(), Lm) = ABCD_sub1;
+ABCD_concatated.block(ABCD_sub1.rows(), 0, zero_sub.rows(), Lm) = zero_sub;
+ABCD_concatated.block(ABCD_sub1.rows() + zero_sub.rows(), 0, ABCD_sub2.rows(), Lm) = ABCD_sub2;
+ABCD_concatated.block(ABCD_sub1.rows() + zero_sub.rows() + ABCD_sub2.rows(), 0, zero_sub.rows(), Lm) = zero_sub;
+ABCD_concatated.block(ABCD_sub1.rows() + zero_sub.rows() + ABCD_sub2.rows() + zero_sub.rows(), 0, ABCD_sub3.rows(), Lm) = ABCD_sub3;
+ABCD_concatated.row(ABCD_concatated.rows() - 1) = m;
+saveit(ABCD_concatated);
+return 0;
 }

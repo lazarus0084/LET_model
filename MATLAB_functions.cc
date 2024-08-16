@@ -90,6 +90,25 @@ MatrixXi repmat(const MatrixXi& mat, int rows, int cols) {
 
     return result;
 }
+// Function overload for SparseVector<double>
+Eigen::SparseMatrix<double> repmat(const Eigen::SparseVector<double>& mat, int rows, int cols) {
+    int size = mat.size();
+    Eigen::SparseMatrix<double> result(size * rows, cols);
+
+    std::vector<Eigen::Triplet<double>> tripletList;
+    tripletList.reserve(mat.nonZeros() * rows * cols);
+
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            for (Eigen::SparseVector<double>::InnerIterator it(mat); it; ++it) {
+                tripletList.emplace_back(i * size + it.index(), j, it.value());
+            }
+        }
+    }
+
+    result.setFromTriplets(tripletList.begin(), tripletList.end());
+    return result;
+}
 
 
 // Function to generate a sequence j:k
