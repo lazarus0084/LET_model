@@ -1,6 +1,6 @@
 #include "iitpave2.h"
 
-int arb_func(int n, const VectorXd& zi, const VectorXd& E, const VectorXd& nu, const Pave& iitpave) {
+MatrixXd arb_func(int n, const VectorXd& zi, const VectorXd& E, const VectorXd& nu, const Pave& iitpave) {
     
 //------------------------------------------------------------------------------
 // DESCRIPTION:
@@ -574,6 +574,6 @@ ABCD_concatated.block(ABCD_sub1.rows() + zero_sub.rows(), 0, ABCD_sub2.rows(), L
 ABCD_concatated.block(ABCD_sub1.rows() + zero_sub.rows() + ABCD_sub2.rows(), 0, zero_sub.rows(), Lm) = zero_sub;
 ABCD_concatated.block(ABCD_sub1.rows() + zero_sub.rows() + ABCD_sub2.rows() + zero_sub.rows(), 0, ABCD_sub3.rows(), Lm) = ABCD_sub3;
 ABCD_concatated.row(ABCD_concatated.rows() - 1) = m;
-saveit(ABCD_concatated);
-return 0;
+
+return ABCD_concatated;
 }

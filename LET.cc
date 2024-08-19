@@ -17,12 +17,13 @@ void init_LET(Pave& iitpave) {
     double Laml = zi(0)/ H ; //Relative height of top layer
     iitpave.Laml = Laml ; iitpave.H = H ;
    
- MatrixXd XipWip = numint_coeff(N, n, Xp, Xl, H , a);  //*filename XipWip sIntegration points and weights
+ MatrixXd XipWip = numint_coeff(N, n, Xp, Xl, H , a) ;  //*filename XipWip sIntegration points and weights
 //    // Display size of XipWip
 // cout << "Size of XipWip: " << XipWip.rows() << " rows x " << XipWip.cols() << " columns." << endl;
 // cout << "Element at (4, 6): " << XipWip(9, 42) << endl;
-arb_func(E.size(),zi,E,nu,iitpave);
-
+MatrixXd ABCD = arb_func(E.size(),zi,E,nu,iitpave) ;
+cout << "Size of ABCD : " << ABCD.rows() << " X " << ABCD.cols() << endl ;
+LET_response(iitpave);
 }
 
     
