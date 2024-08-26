@@ -1,7 +1,7 @@
 #include "iitpave2.h"
 
 
-MatrixXd numint_coeff(int N, int n, MatrixXd Xp, MatrixXd Xl, double H,float a){
+MatrixXd numint_coeff(int N, int n, MatrixXd Xp, MatrixXd Xl, double H,double a){
    
  // Number of load points (xl) and deformation points (xd)
     int xl = Xl.rows(); // Number of load points (rows in Xl)

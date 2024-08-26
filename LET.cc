@@ -2,10 +2,11 @@
 
 void init_LET(Pave& iitpave) {
     int N = iitpave.N;   // Number of Bessel roots in integration
-    int n = iitpave.n;  // Number of integration points in between each Bessel root
-    float a = 150.8;      // MM
-    MatrixXd Xp = iitpave.Xp; // Output coordinates !!Xd in alva file
-    MatrixXd Xl = iitpave.Xl; // Transpose Load position coordinates
+    int n = iitpave.n; 
+    double a = 150.8;     // mm
+    iitpave.a = a;
+    MatrixXd Xp = iitpave.Xp; // Evaluation coordinates data
+    MatrixXd Xl = iitpave.Xl; // Load application position coordinates
    //MatrixXd a = iitpave.a.transpose();   // Transpose Load radii
     VectorXd E  = iitpave.E;   // Transpose Layer Young's moduli
     VectorXd nu = iitpave.nu; // Transpose Layer Poisson's ratios
@@ -18,12 +19,14 @@ void init_LET(Pave& iitpave) {
     iitpave.Laml = Laml ; iitpave.H = H ;
    
  MatrixXd XipWip = numint_coeff(N, n, Xp, Xl, H , a) ;  //*filename XipWip sIntegration points and weights
-//    // Display size of XipWip
+ iitpave.XipWip = XipWip;
+// Display size of XipWip
 // cout << "Size of XipWip: " << XipWip.rows() << " rows x " << XipWip.cols() << " columns." << endl;
 // cout << "Element at (4, 6): " << XipWip(9, 42) << endl;
 MatrixXd ABCD = arb_func(E.size(),zi,E,nu,iitpave) ;
-cout << "Size of ABCD : " << ABCD.rows() << " X " << ABCD.cols() << endl ;
+iitpave.ABCD = ABCD;
 LET_response(iitpave);
+
 }
 
     
