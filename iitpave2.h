@@ -98,7 +98,7 @@ class Pave{
         
         //Load configuration - Single case
         Eigen::VectorXd q;     //Load pressure [MPa] (uniform vertical pressure)
-        double a;    //Load radii [mm] (circular load)
+        VectorXd a;    //Load radii [mm] (circular load)
         Eigen::MatrixXd Xl;  //Load positions [mm]: [x1 y1; x2 y2;..xi yi]
         
         // Location of evaluation points: [x1 y1 z1; x2 y2 z2;..] - Single case
@@ -164,7 +164,7 @@ class Pave{
 /*Function prototypes*/
 void readInputFile(int &numLayers, int &numLoads, int &numPoints, vector<Layer> &layers, vector<Load> &loads, vector<Point> &points,Pave &Gen, string inputfilename);
 void init_LET(Pave& iitpave);
-MatrixXd numint_coeff(int N, int n, MatrixXd Xp, MatrixXd Xl, double H ,double a);
+MatrixXd numint_coeff(int N, int n, MatrixXd Xp, MatrixXd Xl, double H ,VectorXd a);
 MatrixXd besselroots(int o, int N, int k);
 MatrixXd arb_func(int n, const VectorXd& zi, const VectorXd& E, const VectorXd& nu, const Pave& iitpave);
 void LET_response(Pave& iitpave);
