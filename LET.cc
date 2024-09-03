@@ -4,9 +4,9 @@ void init_LET(Pave& iitpave) {
 
     int N, n ;
     double H, Laml;
-    VectorXd E, nu, zi, a(iitpave.Xl.rows());
+    VectorXd E, nu, zi, a(iitpave.Xl.rows()); a = 150.8 * VectorXd::Ones(iitpave.Xl.rows());   iitpave.a = a;
     MatrixXd Xp, Xl;
-    a = 150.8 * VectorXd::Ones(iitpave.Xl.rows());   iitpave.a = a;
+   
  
    // INPUT PARAMETERS
     N = iitpave.N; //Number of Bessel roots in integration
@@ -42,14 +42,12 @@ Laml = zi(0)/H; iitpave.Laml = Laml;  // Relative height of top layer
 
 // // Integration points and weights
 iitpave.XipWip  = numint_coeff(N, n, Xp, Xl, H , a) ;  //*filename XipWip sIntegration points and weights
-saveit(iitpave.XipWip);   
+     
 // Evaluate coefficients of integration 
-iitpave.ABCD  = arb_func(E.size(),zi,E,nu,iitpave) ;
-
-//saveit(iitpave.ABCD);   
+iitpave.ABCD = arb_func(E.size(),zi,E,nu,iitpave) ;
 //saveit(iitpave.ABCD);
 // Evaluate response 
-//LET_response(iitpave);
+LET_response(iitpave);
 
 }
 

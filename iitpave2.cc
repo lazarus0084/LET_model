@@ -9,8 +9,8 @@ int main(int argc,char* argv[])
     Pave iitpave;
     //Read inputs
     readInputFile(numLayers, numLoads, numPoints, layers, loads, points, iitpave, argv[1]);
+    
     //iitpave object populating functons
-    cout << points[0].x0 << endl;
     iitpave.PopulateLayers(layers);
     iitpave.PopulateLoads(loads);
     iitpave.PopulatePoints(points);
