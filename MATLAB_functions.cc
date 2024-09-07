@@ -387,3 +387,61 @@ SparseMatrix<double> extractSparseSubMat(const SparseMatrix<double>& BC0,
     
     return submatrix;
 }
+// Function to perform linear interpolation without using a class
+RowVectorXd linearInterp(const RowVectorXd& x, const RowVectorXd& y, const RowVectorXd& xi) {
+    // Ensure x and y are the same size
+    if (x.size() != y.size()) {
+        std::cerr << "Error: Size mismatch between x and y!" << std::endl;
+        return RowVectorXd::Zero(xi.size());
+    }
+
+    // Sort the (x, y) pairs based on x
+    std::vector<std::pair<double, double>> xyPairs(x.size());
+    for (int i = 0; i < x.size(); ++i) {
+        xyPairs[i] = {x(i), y(i)};
+    }
+
+    // Sort by x
+    std::sort(xyPairs.begin(), xyPairs.end(), [](const std::pair<double, double>& a, const std::pair<double, double>& b) {
+        return a.first < b.first;
+    });
+
+    // Create sorted x and y vectors
+    RowVectorXd xSorted(x.size()), ySorted(x.size());
+    for (int i = 0; i < x.size(); ++i) {
+        xSorted(i) = xyPairs[i].first;
+        ySorted(i) = xyPairs[i].second;
+    }
+
+    // Preallocate the output
+    RowVectorXd yi(xi.size());
+
+    // Loop through each xi and perform interpolation
+    for (int i = 0; i < xi.size(); ++i) {
+        double xiValue = xi(i);
+
+        // Find the interval in xSorted that contains xi
+        auto it = std::lower_bound(xSorted.data(), xSorted.data() + xSorted.size(), xiValue);
+
+        // Handle out-of-bounds cases
+        if (it == xSorted.data()) {
+            yi(i) = ySorted(0);  // Use first value if xi is below x range
+        } else if (it == xSorted.data() + xSorted.size()) {
+            yi(i) = ySorted(ySorted.size() - 1);  // Use last value if xi is above x range
+        } else {
+            // We're in the range: interpolate between the surrounding points
+            int idx = it - xSorted.data();
+            if (xSorted(idx) == xiValue) {
+                yi(i) = ySorted(idx);  // xi matches an x value exactly
+            } else {
+                // Linear interpolation formula
+                double xa = xSorted(idx - 1), xb = xSorted(idx);
+                double ya = ySorted(idx - 1), yb = ySorted(idx);
+                double t = (xiValue - xa) / (xb - xa);
+                yi(i) = ya + t * (yb - ya);
+            }
+        }
+    }
+
+    return yi;
+}

@@ -13,6 +13,7 @@
 #include <complex>
 #include <algorithm>
 #include <cassert>
+#include <numeric> 
 
 #ifndef M_PI
     #define M_PI 3.14159265358979323846
@@ -205,5 +206,6 @@ MatrixXi ind2sub(int rows, int columns, const VectorXi& linear_indices) ;
 SparseMatrix<double> extractSparseSubMat(const SparseMatrix<double>& BC0, 
                                          const VectorXi& row_indices, 
                                          const VectorXi& column_indices) ;
-
+MatrixXd arb_func_interp(int n, const RowVectorXd& xip, const MatrixXd& ABCD);
+RowVectorXd linearInterp(const RowVectorXd& x, const RowVectorXd& y, const RowVectorXd& xi);
  

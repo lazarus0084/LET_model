@@ -1,7 +1,6 @@
 #include "iitpave2.h"
 
 void LET_response(Pave& iitpave) {
-    cout << "control at LET_response" << endl;
     int N, n ;
     double H, Laml;
     VectorXd E, nu, zi, q, a(iitpave.Xl.rows()); a = 150.8 * VectorXd::Ones(iitpave.Xl.rows());   iitpave.a = a;
@@ -179,7 +178,7 @@ VectorXd Lami(rho.size()); Lami.setZero();
 VectorXd Lami1 = Lami;
 
 
-   for (size_t i = 0; i < layer_no.size(); ++i) {
+   for (int  i = 0; i < layer_no.size(); ++i) {
         // Adjust for 0-based indexing in C++ (layer_no[i] is assumed to be 1-based like in MATLAB)
         int layer_idx = layer_no[i] - 1;
 
@@ -202,9 +201,64 @@ VectorXd Lami1 = Lami;
         }
     }
 
-    cout << Lami1 << endl;
-    MatrixXd dense = Lami1;
-    saveit(dense);
+  // Evaluating response
+
+// Summation form
+// length(rho) = number of point to load radii, nz = number of integration 
+// points in every point to load integral
+  
+  MatrixXd Aa(rho.size(),nz); Aa.setZero();
+
+  MatrixXd Bb, Cc, Dd;
+   Bb = Aa; Cc = Aa; Dd = Aa;
+  MatrixXd ABCDz(E.size(), xip_z.cols());
+
+   for (int  j = 0; j < rho.size(); ++j) {
+   
+    ABCDz = arb_func_interp(E.size(), xip_z.row(j), ABCD);
+
+    Aa.row(j) = ABCDz.row(4*(layer_no(j)-1) + 0);
+    Bb.row(j) = ABCDz.row(4*(layer_no(j)-1) + 1);
+    Cc.row(j) = ABCDz.row(4*(layer_no(j)-1) + 2);
+    Dd.row(j) = ABCDz.row(4*(layer_no(j)-1) + 3);
+            
+}
+
+
+
+
+VectorXd Nu, Ee ;
+
+Nu = nu(layer_no.array()-1);
+Ee = E(layer_no.array()-1);
+
+// Define exponential functions for one-step Richardson extrapolation
+double x1 = pow(2, -20);
+MatrixXd Iz1 = (-x1 * xip_z.array().square()).exp();
+MatrixXd Iz2 = (-(x1 / 2.0) * xip_z.array().square()).exp();
+MatrixXd Ir1 = (-x1 * xip_r.array().square()).exp();
+MatrixXd Ir2 = (-(x1 / 2.0) * xip_r.array().square()).exp();
+
+MatrixXd supra = MatrixXd::Zero(Iz1.rows(), Iz1.cols() + Iz2.cols() + Ir1.cols() + Ir2.cols());
+supra << Iz1, Iz2, Ir1, Ir2;
+
+
+
+MatrixXd dense = supra ;saveit(dense);
+
+
+#if 0
+// % Define E and Nu values for the layer considered for the evaluation of response
+// Nu = nu(layer_no)';
+// Ee = E(layer_no)';
+
+// % Define exponential functions for one-step Richardson extrapolation 
+// x1 = 2^(-20);
+// Iz1 = exp(-x1*xip_z.^2);
+// Iz2 = exp(-(x1/2)*xip_z.^2);
+// Ir1 = exp(-x1*xip_r.^2);
+// Ir2 = exp(-(x1/2)*xip_r.^2);
+#endif
 
 }
 
