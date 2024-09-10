@@ -4,14 +4,14 @@ void LET_response(Pave& iitpave) {
     int N, n ;
     double H, Laml;
     VectorXd E, nu, zi, q, a(iitpave.Xl.rows()); a = 150.8 * VectorXd::Ones(iitpave.Xl.rows());   iitpave.a = a;
-    MatrixXd Xp, Xl, XipWip,ABCD;
+    MatrixXd Xp, Xl,Xl1, XipWip,ABCD;
    
  
    // INPUT PARAMETERS
     N = iitpave.N; //Number of Bessel roots in integration
     n = iitpave.n; //Number of integration points in between each Bessel root
     Xp = iitpave.Xp; //Output coordinates
-    Xl = iitpave.Xl; //Load posistion coordinates
+    Xl1 = iitpave.Xl; //Load posistion coordinates
    // a = iitpave.a; //Load radii
     E = iitpave.E; //Layer Young's moduli
     nu = iitpave.nu; //Layer Poisson's ratios
@@ -56,7 +56,7 @@ void LET_response(Pave& iitpave) {
     }
 
 // Number of loads (xl) and deformation points (xd)
-    int xl = Xl.rows(); // Number of load points
+    int xl = Xl1.rows(); // Number of load points
     int xp = Xp.rows(); // Number of deformation points
 // Check if the length of q and a are correct
      if (q.size() < xl || a.size() < xl) {
@@ -66,7 +66,7 @@ void LET_response(Pave& iitpave) {
     }
 // Increase Xl, q, alpha, Xd and z in order to estimate the radius from each
 // of the loads to all of the points. The number of radii are: xl*xd
-    Xl = repmat(Xl, xp, 1);   // Extends with the number of evaluation
+    Xl = repmat(Xl1, xp, 1);   // Extends with the number of evaluation
                              // points
     q  = repmat(q, xp, 1);    //-||-
     MatrixXd alpha = repmat(a, xp, 1).array()/H;  // -||-
@@ -84,7 +84,7 @@ void LET_response(Pave& iitpave) {
    // Now clear and reuse arg1 with new size
     Sequence.resize(xl);  // Resize to hold 'xl' elements
 
-    Sequence = Eigen::RowVectorXi::LinSpaced(xl, 0, xp * (xl - 1));
+    Sequence = RowVectorXi::LinSpaced(xl, 0, xp * (xl - 1));
 
     RowVectorXi dx = dx1.reshaped(1,dx1.size()) + repmat(Sequence,1,xp); dx = dx.array() -1;
 
@@ -116,7 +116,8 @@ void LET_response(Pave& iitpave) {
 //      last evaluation point and load N];
 
 
-   VectorXd r = ((Xp.col(0) - Xl.col(0)).array().square() + (Xp.col(1) - Xl.col(1)).array().square()).sqrt();
+   VectorXd r = ((Xp1.col(0) - Xl.col(0)).array().square() + (Xp1.col(1) - Xl.col(1)).array().square()).sqrt();
+
 
 // Introduce the parameter rho (notice: since r is a vector, rho is too)
    VectorXd rho = r.array()/H;
@@ -210,22 +211,20 @@ VectorXd Lami1 = Lami;
   MatrixXd Aa(rho.size(),nz); Aa.setZero();
 
   MatrixXd Bb, Cc, Dd;
-   Bb = Aa; Cc = Aa; Dd = Aa;
+
+  Bb = Aa; Cc = Aa; Dd = Aa;
+
   MatrixXd ABCDz(E.size(), xip_z.cols());
 
    for (int  j = 0; j < rho.size(); ++j) {
    
     ABCDz = arb_func_interp(E.size(), xip_z.row(j), ABCD);
 
-    Aa.row(j) = ABCDz.row(4*(layer_no(j)-1) + 0);
-    Bb.row(j) = ABCDz.row(4*(layer_no(j)-1) + 1);
-    Cc.row(j) = ABCDz.row(4*(layer_no(j)-1) + 2);
-    Dd.row(j) = ABCDz.row(4*(layer_no(j)-1) + 3);
+    Aa.row(j) = ABCDz.row(4*(layer_no(j)-1) + 0);  Bb.row(j) = ABCDz.row(4*(layer_no(j)-1) + 1);
+
+    Cc.row(j) = ABCDz.row(4*(layer_no(j)-1) + 2);  Dd.row(j) = ABCDz.row(4*(layer_no(j)-1) + 3);
             
 }
-
-
-
 
 VectorXd Nu, Ee ;
 
@@ -239,27 +238,76 @@ MatrixXd Iz2 = (-(x1 / 2.0) * xip_z.array().square()).exp();
 MatrixXd Ir1 = (-x1 * xip_r.array().square()).exp();
 MatrixXd Ir2 = (-(x1 / 2.0) * xip_r.array().square()).exp();
 
-MatrixXd supra = MatrixXd::Zero(Iz1.rows(), Iz1.cols() + Iz2.cols() + Ir1.cols() + Ir2.cols());
-supra << Iz1, Iz2, Ir1, Ir2;
+// MatrixXd uzs = besselj(0,xip_z.array()*repmat(rho,1,nz).array())
+//                (//
+//                 (Aa - Cc).array() * (2 - 4*repmat(Nu,1, nz) - xip_z.array()*repmat(z/H,1,nz).array() ).array()exp(-xipz.array()repmat(Lami-z/H,nz))    )
+
+VectorXd zbyH =  z/H ;
+VectorXd LamizbyH =  Lami - z/H ;
+VectorXd Lami1zbyH = z/H - Lami1;
+
+MatrixXd uzs = besselj(0, (xip_z.array() * repmat(rho, 1, nz).array())).array() * 
+
+(((Aa.array() - (Cc.array() * ((2 - 4*repmat(Nu,1,nz).array()) 
+- (xip_z.array() * repmat(zbyH,1,nz).array())).array()).array()).array()
+* ((-xip_z.array()*repmat(LamizbyH,1,nz).array()).array()).array().exp() ) -
+ 
+ ((Bb.array() + (Dd.array() * ((2 - 4*repmat(Nu,1,nz).array()) 
++ (xip_z.array() * repmat(zbyH,1,nz).array())).array()).array()).array()
+* ((-xip_z.array()*repmat(Lami1zbyH,1,nz).array()).array()).array().exp() )).array();
+
+// Improve the convergence for points residing close to the surface
+
+MatrixXd Iuz1 =  (-H * q.array() * alpha.array() * (1 + Nu.array()).array()).array()/ (Ee.array()).array()
+                * ( (uzs.array() * ((((besselj(1,xip_z.array()*repmat(alpha,1,nz).array())).array()
+                / (xip_z.array())).array()).array() *  wip_z.array() 
+                * Iz1.array()).array()).rowwise().sum() ).array();
+
+MatrixXd Iuz2 =  (-H * q.array() * alpha.array() * (1 + Nu.array()).array()).array()/ (Ee.array()).array()
+                * ( (uzs.array() * ((((besselj(1,xip_z.array()*repmat(alpha,1,nz).array())).array()
+                / (xip_z.array())).array()).array() *  wip_z.array() 
+                * Iz2.array()).array()).rowwise().sum() ).array();
+
+MatrixXd uz = (4*Iuz2.array() - Iuz1.array()).array()/ 3 ;
+
+////////////////////////ur////////////////////////////////////////////////
 
 
 
-MatrixXd dense = supra ;saveit(dense);
+
+MatrixXd test = besselj(1,xip_r.array()*repmat(rho,1,nz).array()).array() *
+
+               ((Aa.array() + (Cc.array() * (1 + (xip_r.array()*repmat(zbyH, 1, nz).array()).array()).array()).array()).array()
+               * (((-xip_r.array()*repmat(LamizbyH,1,nz).array()).array()).array().exp() ).array() 
+                        
+                                                            +
+
+                (Bb.array() + (Dd.array() * (1 - (xip_r.array()*repmat(zbyH, 1, nz).array()).array()).array()).array()).array()
+               * (((-xip_r.array()*repmat(Lami1zbyH,1,nz).array()).array()).array().exp() ).array()).array();
 
 
+
+
+
+
+saveit(test);
 #if 0
-// % Define E and Nu values for the layer considered for the evaluation of response
-// Nu = nu(layer_no)';
-// Ee = E(layer_no)';
 
-// % Define exponential functions for one-step Richardson extrapolation 
-// x1 = 2^(-20);
-// Iz1 = exp(-x1*xip_z.^2);
-// Iz2 = exp(-(x1/2)*xip_z.^2);
-// Ir1 = exp(-x1*xip_r.^2);
-// Ir2 = exp(-(x1/2)*xip_r.^2);
+%%%%% u_r %%%%%
+
+urs = besselj(1,xip_r.*repmat(rho,1,nz)).*...
+    (...
+    (Aa+Cc.*(1+xip_r.*repmat(z/H,1,nz))).*exp(-xip_r.*repmat(Lami-z/H,1,nz))+...
+    (Bb-Dd.*(1-xip_r.*repmat(z/H,1,nz))).*exp(-xip_r.*repmat(z/H-Lami1,1,nz))...
+    );
+
+% Improve the convergence for points residing close to the surface
+Iur1 = q.*alpha.*H.*(1+Nu)./Ee.*sum(urs.*besselj(1,xip_r.*repmat(alpha,1,nz))./xip_r.*wip_r.*Ir1,2);
+Iur2 = q.*alpha.*H.*(1+Nu)./Ee.*sum(urs.*besselj(1,xip_r.*repmat(alpha,1,nz))./xip_r.*wip_r.*Ir2,2);
+ur = (4*Iur2-Iur1)/3;
+
+
 #endif
-
 }
 
 

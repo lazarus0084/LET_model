@@ -445,3 +445,22 @@ RowVectorXd linearInterp(const RowVectorXd& x, const RowVectorXd& y, const RowVe
 
     return yi;
 }
+// Define the besselj function that takes an order `n` and a matrix `m1`
+MatrixXd besselj(int n, const MatrixXd& m1) {
+    MatrixXd result(m1.rows(), m1.cols());
+
+    // Apply the Bessel function of order n to each element of the matrix
+    for (int i = 0; i < m1.rows(); ++i) {
+        for (int j = 0; j < m1.cols(); ++j) {
+            if (n == 0) {
+                result(i, j) = j0(m1(i, j));  // j0 for Bessel function of order 0
+            } else if (n == 1) {
+                result(i, j) = j1(m1(i, j));  // j1 for Bessel function of order 1
+            } else {
+                result(i, j) = jn(n, m1(i, j));  // jn for higher orders
+            }
+        }
+    }
+
+    return result;
+}
