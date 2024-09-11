@@ -275,24 +275,70 @@ MatrixXd uz = (4*Iuz2.array() - Iuz1.array()).array()/ 3 ;
 
 
 
-MatrixXd test = besselj(1,xip_r.array()*repmat(rho,1,nz).array()).array() *
+// MatrixXd test = besselj(1,xip_r.array()*repmat(rho,1,nz).array()).array() *
 
-               ((Aa.array() + (Cc.array() * (1 + (xip_r.array()*repmat(zbyH, 1, nz).array()).array()).array()).array()).array()
-               * (((-xip_r.array()*repmat(LamizbyH,1,nz).array()).array()).array().exp() ).array() 
+//                ((Aa.array() + (Cc.array() * (1 + (xip_r.array()*repmat(zbyH, 1, nz).array()).array()).array()).array()).array()
+//                * (((-xip_r.array()*repmat(LamizbyH,1,nz).array()).array()).array().exp() ).array() 
                         
-                                                            +
+//                                                             +
 
-                (Bb.array() + (Dd.array() * (1 - (xip_r.array()*repmat(zbyH, 1, nz).array()).array()).array()).array()).array()
-               * (((-xip_r.array()*repmat(Lami1zbyH,1,nz).array()).array()).array().exp() ).array()).array();
+//                 (Bb.array() + (Dd.array() * (1 - (xip_r.array()*repmat(zbyH, 1, nz).array()).array()).array()).array()).array()
+            //   * (((-xip_r.array()*repmat(Lami1zbyH,1,nz).array()).array()).array().exp() ).array()).array();
+
+//MatrixXd test1 = besselj(1,xip_r.array()*repmat(rho,1,nz)array());
+//MatrixXd test2 = Aa.array() - (Cc.array() * ((2 - 4*repmat(Nu,1,nz).array()) ;
+
+MatrixXd urs = besselj(1, xip_r.array()*repmat(rho,1,nz).array()).array()            *
+
+     ((Aa.array() + (Cc.array() * (1 + (xip_r.array() * repmat(zbyH, 1, nz).array()).array()).array()).array()).array() * (((-xip_r.array()*repmat(LamizbyH,1,nz).array()).array()).array().exp() ).array()  
+                                                                                         + 
+     (Bb.array() - (Dd.array() * (1 - (xip_r.array() * repmat(zbyH, 1, nz).array()).array()).array()).array()).array() *  ((-xip_r.array() * repmat(Lami1zbyH, 1, nz).array()).array().exp() ).array() ).array();
+
+
+MatrixXd Iur1 = ((H* q.array() * alpha.array() * (1 + Nu.array())).array()/Ee.array()).array() * ( (urs.array() * ((((besselj(1,xip_r.array()*repmat(alpha,1,nz).array())).array()
+                / (xip_r.array())).array()).array() *  wip_r.array() 
+                * Ir1.array()).array()).rowwise().sum() ).array(); 
 
 
 
+MatrixXd Iur2 = ((H* q.array() * alpha.array() * (1 + Nu.array())).array()/Ee.array()).array() * ( (urs.array() * ((((besselj(1,xip_r.array()*repmat(alpha,1,nz).array())).array()
+                / (xip_r.array())).array()).array() *  wip_r.array() 
+                * Ir2.array()).array()).rowwise().sum() ).array(); 
+
+MatrixXd ur = (4*Iur2 - Iur1).array()/3 ;
 
 
 
-saveit(test);
+// -------------------------------------------------------------------------
+// STRESSES 
+// -------------------------------------------------------------------------
+//%%%%% Sigma_z %%%%%
+
+
+MatrixXd sigma_zs =   ( -xip_z.array() * besselj(0, xip_z.array()*repmat(rho,1,nz).array()).array()).array()   *
+
+((Aa.array() -  (  Cc.array() * ( (1 - 2*repmat(Nu,1, nz).array()) - (xip_z.array() * repmat(zbyH, 1, nz).array()) ).array()).array()).array() *  (((-xip_z.array()*repmat(LamizbyH,1,nz).array()).array()).array().exp() ).array()
+
+                                                                                                                  +
+(Bb.array() +  (  Dd.array() * ( (1 - 2*repmat(Nu,1, nz).array()) + (xip_z.array() * repmat(zbyH, 1, nz).array()) ).array()).array()).array() * ((-xip_z.array() * repmat(Lami1zbyH, 1, nz).array()).array().exp()).array()).array();
+
+
+
+saveit(sigma_zs);
+
+
 #if 0
+MatrixXd test1 =     ( -xip_z.array() * besselj(1, xip_z.array()*repmat(rho,1,nz).array()).array()).array() ;
 
+MatrixXd test2 =   (Aa.array() -  (  Cc.array() * ( (1 - 2*repmat(Nu,1, nz).array()) - (xip_z.array() * repmat(zbyH, 1, nz).array()) ).array()).array()).array() *  (((-xip_z.array()*repmat(LamizbyH,1,nz).array()).array()).array().exp() ).array();
+  
+MatrixXd test3 =   (((-xip_z.array()*repmat(LamizbyH,1,nz).array()).array()).array().exp() ).array();
+
+MatrixXd test4 = (Bb.array() +  (  Dd.array() * ( (1 - 2*repmat(Nu,1, nz).array()) + (xip_z.array() * repmat(zbyH, 1, nz).array()) ).array()).array()).array() * ((-xip_z.array() * repmat(Lami1zbyH, 1, nz).array()).array().exp()).array()  ;
+
+MatrixXd test5 =((-xip_z.array() * repmat(Lami1zbyH, 1, nz).array()).array().exp()).array() ;
+
+MatrixXd test6 = test1.array() * (test2.array() * test3.array() + test4.array() * test5.array()).array() ;
 %%%%% u_r %%%%%
 
 urs = besselj(1,xip_r.*repmat(rho,1,nz)).*...
@@ -301,8 +347,18 @@ urs = besselj(1,xip_r.*repmat(rho,1,nz)).*...
     (Bb-Dd.*(1-xip_r.*repmat(z/H,1,nz))).*exp(-xip_r.*repmat(z/H-Lami1,1,nz))...
     );
 
-% Improve the convergence for points residing close to the surface
+
+
+// Improve the convergence for points residing close to the surface
 Iur1 = q.*alpha.*H.*(1+Nu)./Ee.*sum(urs.*besselj(1,xip_r.*repmat(alpha,1,nz))./xip_r.*wip_r.*Ir1,2);
+
+
+* ( (urs.array() * ((((besselj(1,xip_r.array()*repmat(alpha,1,nz).array())).array()
+                / (xip_r.array())).array()).array() *  wip_r.array() 
+                * Ir1.array()).array()).rowwise().sum() ).array();
+
+Iuz1 = q.*alpha.*(-1)*H.*(1+Nu)./Ee.*sum(uzs.*besselj(1,xip_z.*repmat(alpha,1,nz))./xip_z.*wip_z.*Iz1,2);
+
 Iur2 = q.*alpha.*H.*(1+Nu)./Ee.*sum(urs.*besselj(1,xip_r.*repmat(alpha,1,nz))./xip_r.*wip_r.*Ir2,2);
 ur = (4*Iur2-Iur1)/3;
 
