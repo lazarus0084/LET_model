@@ -4,13 +4,13 @@ void LET_response(Pave& iitpave) {
     int N, n ;
     double H, Laml;
     VectorXd E, nu, zi, q, a(iitpave.Xl.rows()); a = 150.8 * VectorXd::Ones(iitpave.Xl.rows());   iitpave.a = a;
-    MatrixXd Xp, Xl,Xl1, XipWip,ABCD;
+    MatrixXd Xp_temp,Xp,Xp_1, Xl,Xl1, XipWip,ABCD;
    
  
    // INPUT PARAMETERS
     N = iitpave.N; //Number of Bessel roots in integration
     n = iitpave.n; //Number of integration points in between each Bessel root
-    Xp = iitpave.Xp; //Output coordinates
+    Xp_temp = iitpave.Xp; //Output coordinates
     Xl1 = iitpave.Xl; //Load posistion coordinates
    // a = iitpave.a; //Load radii
     E = iitpave.E; //Layer Young's moduli
@@ -57,7 +57,7 @@ void LET_response(Pave& iitpave) {
 
 // Number of loads (xl) and deformation points (xd)
     int xl = Xl1.rows(); // Number of load points
-    int xp = Xp.rows(); // Number of deformation points
+    int xp = Xp_temp.rows(); // Number of deformation points
 // Check if the length of q and a are correct
      if (q.size() < xl || a.size() < xl) {
       cout << "Number of q and/or a values is lower than the number of load coordinates (= number of loads), so all loads are given the same q- and a-values" << endl;
@@ -70,7 +70,7 @@ void LET_response(Pave& iitpave) {
                              // points
     q  = repmat(q, xp, 1);    //-||-
     MatrixXd alpha = repmat(a, xp, 1).array()/H;  // -||-
-    Xp    = repmat(Xp, xl, 1);   // -||- <-- is reorganized below to 
+    Xp_1   = repmat(Xp_temp, xl, 1);   // -||- <-- is reorganized below to 
                              // correspond to the right Xl content/sequence
 // Reorganize Xd so the first xl rows correspond to the same deformation
 // point, and following xl rows correspond to the next deformation point
@@ -88,9 +88,10 @@ void LET_response(Pave& iitpave) {
 
     RowVectorXi dx = dx1.reshaped(1,dx1.size()) + repmat(Sequence,1,xp); dx = dx.array() -1;
 
-     MatrixXd Xp1 = Xp(dx , all);
+     Xp = Xp_1(dx , all);
      
-     VectorXd z = Xp1(Eigen::all, 2);
+     VectorXd z = Xp(Eigen::all, 2);
+    
 
 // // Built dx vector used to reorganize/sort Xd in the right order
 // VectorXi arg1 = Eigen::RowVectorXi::LinSpaced(xp, 1, xp);
@@ -116,7 +117,7 @@ void LET_response(Pave& iitpave) {
 //      last evaluation point and load N];
 
 
-   VectorXd r = ((Xp1.col(0) - Xl.col(0)).array().square() + (Xp1.col(1) - Xl.col(1)).array().square()).sqrt();
+   VectorXd r = ((Xp.col(0) - Xl.col(0)).array().square() + (Xp.col(1) - Xl.col(1)).array().square()).sqrt();
 
 
 // Introduce the parameter rho (notice: since r is a vector, rho is too)
@@ -413,7 +414,59 @@ MatrixXd tau_rz = (4*Itr2 - Itr1).array()/3 ;
 // Note: the r-axis goes in the direction
 
 
+ //SparseMatrix<double> T = spalloc(3*r.size(), 3*r.size(), (3*3 -4)*r.size());
 
+// MatrixXd T(3 * r.size(), 3 * r.size() ); T.setZero(); //T = sparse(3*length(r),3*length(r)
+
+
+//Organize content of the T matrix
+
+ VectorXd COS = (Xp.col(0) - Xl.col(0)).array()/r.array() ;
+
+ VectorXd SIN = (Xp.col(1) - Xl.col(1)).array()/r.array() ;
+
+// Assuming r, COS, and SIN are Eigen matrices or vectors
+// Define a small tolerance for floating-point comparison
+ double epsilon = 1e-12; // Adjust the tolerance as needed
+
+// Use the tolerance to check if the values in r are "close" to 0
+ COS = (r.array().abs() < epsilon).select(1, COS);
+
+ SIN = (r.array().abs() < epsilon).select(0, SIN);
+
+//  % Address the content into the matrix
+// T(1:3*3*length(r)+3:end)               =  COS;
+    MatrixXd T(3 * r.size(), 3 * r.size()); T.setZero();
+    VectorXd T_temp(3*r.size() * 3*r.size()); T_temp.setZero();
+
+    int start = 1;  // Start at 1
+    int step = 3*3*r.size() + 3;  // Step size is 147
+    int end = T_temp.size() ;  // End size (2304)
+
+    // Calculate how many steps are needed
+    int numElements = (T_temp.size() - 3 * 3 * r.size()) / (3*3*r.size()) + 1;  // Number of elements in the sequence
+
+    // Generate the sequence using LinSpaced
+    VectorXi indices = VectorXi::LinSpaced(numElements, start, start + (numElements - 1) * step).array() -1;
+    
+   // indices = indices.array() -1;
+   T_temp( VectorXi::LinSpaced(numElements, start, start + (numElements - 1) * step).array() -1) =  COS ;
+   start = 2;
+   T_temp( VectorXi::LinSpaced(numElements, start, start + (numElements - 1) * step).array() -1) = -SIN ;
+   
+   start = 3 * r.size() + 1;
+   T_temp( VectorXi::LinSpaced(numElements, start, start + (numElements - 1) * step).array() -1) =  SIN ;
+   
+   start = 3 * r.size() + 2;
+   T_temp( VectorXi::LinSpaced(numElements, start, start + (numElements - 1) * step).array() -1) =  COS ;
+   
+   start = 2 * 3*  r.size() + 3;
+   T_temp( VectorXi::LinSpaced(numElements, start, start + (numElements - 1) * step).array() -1) = VectorXd::Ones(COS.size()); 
+
+   T = T_temp.reshaped(3 * r.size(), 3 * r.size());
+
+
+   saveit(T);
 
 
 }
