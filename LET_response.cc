@@ -430,13 +430,13 @@ MatrixXd tau_rz = (4*Itr2 - Itr1).array()/3 ;
  double epsilon = 1e-12; // Adjust the tolerance as needed
 
 // Use the tolerance to check if the values in r are "close" to 0
- COS = (r.array().abs() < epsilon).select(1, COS);
+   COS = (r.array().abs() < epsilon).select(1, COS);
 
- SIN = (r.array().abs() < epsilon).select(0, SIN);
+   SIN = (r.array().abs() < epsilon).select(0, SIN);
 
 //  % Address the content into the matrix
-// T(1:3*3*length(r)+3:end)               =  COS;
-    MatrixXd T(3 * r.size(), 3 * r.size()); T.setZero();
+
+    MatrixXd T(3 * r.size(), 3 * r.size()); T.setZero(); T(3 * r.size() - 1, 3 * r.size() - 1) = (3*3-4) * r.size();
     VectorXd T_temp(3*r.size() * 3*r.size()); T_temp.setZero();
 
     int start = 1;  // Start at 1
@@ -465,10 +465,101 @@ MatrixXd tau_rz = (4*Itr2 - Itr1).array()/3 ;
 
    T = T_temp.reshaped(3 * r.size(), 3 * r.size());
 
+// Organize displacement vector
+    VectorXd u1(3 * r.size(), 1); u1.setZero();
+    start = 1;  // Start at 1
+    step = 3;  // Step size is 147
+    end = 3 * r.size();  // End size (2304)
 
-   saveit(T);
+        // Generate the sequence using LinSpaced
+   // VectorXi indices = VectorXi::LinSpaced( (end - start) / step + 1, start, start + ((end - start) / step) * step);
+
+    u1(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() - 1) = ur;
+
+    start = 3;
+    //u1(2:3:end) = 0; % Displacements transverse to the radius (u_theta = 0)
+    u1(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() - 1) = uz;
+    
+    // Organize stress matrix
+
+    MatrixXd sig1(3 * r.size(), 3 * r.size()); sig1.setZero(); sig1(3 * r.size() - 1, 3 * r.size() - 1) = (3*3-4) * r.size();
+    VectorXd sig1_temp(3*r.size() * 3*r.size()); sig1_temp.setZero();
+    
+
+    // Flattening r and theta responses
+    VectorXd Flat_sigma_r = sigma_r.reshaped(sigma_r.size(), 1);
+    VectorXd Flat_sigma_z = sigma_z.reshaped(sigma_z.size(), 1);
+    VectorXd Flat_sigma_theta = sigma_theta.reshaped(sigma_theta.size(), 1);
+    VectorXd Flat_tau_rz = tau_rz.reshaped(tau_rz.size(), 1);
+                
+    start = 1;  // Start at 1
+    step = 3 * 3* r.size() + 3;  // Step size is 147
+    end =  sig1_temp.size() ;
+
+    // Generate the sequence using LinSpaced
+    sig1_temp(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() - 1) 
+    = Flat_sigma_r.head((VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() - 1).size());
+
+    start = 3*r.size() + 2 ;  // Start at 1
+    
+    sig1_temp(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() - 1) 
+    = Flat_sigma_theta.head((VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() - 1).size());
+
+    start =2*3*r.size() + 3 ;  // Start at 1
+
+    sig1_temp(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() - 1) 
+    = Flat_sigma_z.head((VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() - 1).size());
+
+    start = 3 ;  /// Start at 1
+
+    sig1_temp(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() - 1) 
+    = Flat_tau_rz.head((VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() - 1).size());
+
+    
+    start =2*3*r.size() + 1 ;  // Start at 1
+
+    sig1_temp(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() - 1) 
+    = Flat_tau_rz.head((VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() - 1).size());
+
+    sig1 = sig1_temp.reshaped(3 * r.size(), 3 * r.size());
+
+    // Transform deformations in to (x,y,z)-coordinates
+    u1 = T.transpose() * u1;
+    MatrixXd u  = u1;
+    
+    // Transform stresses into (x,y,z)-coordinates
+    sig1 = T.transpose() * sig1 * T;
+    MatrixXd sigm  = sig1;
+
+    // Transform 3x3 matrices into 6x1 vectors
+    VectorXd dos(6*xp*xl); dos.setZero();
+
+    start = 1;  
+    step = 9*xp*xl + 3;
+    end =  9*xp*xl*r.size();
+
+    VectorXd dos_pop = VectorXd::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step) ;
+
+    
+    start = 1;  
+    step = 6;
+    end =  dos.size() - 5;
+
+    dos(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() - 1) 
+    = dos_pop.head((end - start) / step + 1);
+
+// dos(1:6:end-5) = 1:9*xd*xl+3:9*xd*xl*length(r);
+// dos(2:6:end-4) = dos(1:6:end-5) + 3*xd*xl+1;
+// dos(3:6:end-3) = dos(1:6:end-5) + 2*3*xd*xl+2;
+// dos(4:6:end-2) = dos(1:6:end-5) + 1;
+// dos(5:6:end-1) = dos(2:6:end-4) + 1;
+// dos(6:6:end)   = dos(1:6:end-5) + 2;
 
 
+MatrixXd dense;
+dense = dos;
+
+saveit(dense);
 }
 
 
