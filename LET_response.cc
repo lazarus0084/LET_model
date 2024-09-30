@@ -532,13 +532,13 @@ MatrixXd tau_rz = (4*Itr2 - Itr1).array()/3 ;
     MatrixXd sigm  = sig1;
 
     // Transform 3x3 matrices into 6x1 vectors
-    VectorXd dos(6*xp*xl); dos.setZero();
+    VectorXi dos(6*xp*xl); dos.setZero();
 
     start = 1;  
     step = 9*xp*xl + 3;
     end =  9*xp*xl*r.size();
 
-    VectorXd dos_pop = VectorXd::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step) ;
+    VectorXi dos_pop1 = VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step) ;
 
     
     start = 1;  
@@ -546,20 +546,159 @@ MatrixXd tau_rz = (4*Itr2 - Itr1).array()/3 ;
     end =  dos.size() - 5;
 
     dos(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() - 1) 
-    = dos_pop.head((end - start) / step + 1);
-
-// dos(1:6:end-5) = 1:9*xd*xl+3:9*xd*xl*length(r);
-// dos(2:6:end-4) = dos(1:6:end-5) + 3*xd*xl+1;
-// dos(3:6:end-3) = dos(1:6:end-5) + 2*3*xd*xl+2;
-// dos(4:6:end-2) = dos(1:6:end-5) + 1;
-// dos(5:6:end-1) = dos(2:6:end-4) + 1;
-// dos(6:6:end)   = dos(1:6:end-5) + 2;
+    = dos_pop1.head((end - start) / step + 1);
 
 
-MatrixXd dense;
-dense = dos;
 
-saveit(dense);
+
+    start = 2;  
+    step = 6;
+    end =  dos.size() - 4;
+    
+    
+    dos(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() - 1) 
+    = dos(VectorXi::LinSpaced((dos.size() - 1) / 6 + 1, 1, 1 + ((dos.size() - 1) / 6) * 6).array() -1).array() + 3*xp*xl+1;
+
+    start = 3;  
+    step = 6;
+    end =  dos.size() - 3;
+    
+    dos(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() - 1) 
+    = dos(VectorXi::LinSpaced((dos.size() - 6) / 6 + 1, 1, 1 + ((dos.size() - 6) / 6) * 6).array()-1).array() + 2*3*xp*xl+2;
+    
+    start = 4;  
+    step = 6;
+    end =  dos.size() - 2;
+    
+    dos(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() - 1) 
+    =  dos(VectorXi::LinSpaced((dos.size() - 6) / 6 + 1, 1, 1 + ((dos.size() - 6) / 6) * 6).array()-1).array() + 1;
+      
+    start = 5;  
+    step = 6;
+    end =  dos.size() - 1;
+    
+    dos(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() - 1) 
+    =  dos(VectorXi::LinSpaced((dos.size() - 6 ) / 6 + 1, 2, 2 + ((dos.size() - 6) / 6) * 6).array()-1).array() + 1;
+
+    start = 6;  
+    step = 6;
+    end =  dos.size();
+    
+    dos(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() - 1) 
+    =  dos(VectorXi::LinSpaced((dos.size() - 6) / 6 + 1, 1, 1 + ((dos.size() - 6) / 6) * 6).array()-1).array() + 2;
+
+    dos = dos.array() -1;
+    
+    VectorXd sigm_flat = sigm.reshaped() ;
+    VectorXd sigv = sigm_flat(dos);
+
+  // Organize matrix Txyz for adding displacements together
+    
+    VectorXi unos(3*xp*xl); unos.setZero();
+
+    start = 1;  step = 9 * xp; end = 9*xl*xp ;
+    
+    unos(VectorXi::LinSpaced(xl,1,xl).array() -1 ) =  VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step);
+
+    unos(VectorXi::LinSpaced(xl, xl + 1, 2 * xl).array() -1 ) =   unos(VectorXi::LinSpaced(xl,1,xl).array() -1 ).array() + 3*xp + 1;  
+
+    unos(VectorXi::LinSpaced(xl, 2 * xl + 1, 3 * xl).array() -1 ) =   unos(VectorXi::LinSpaced(xl,1,xl).array() -1 ).array() + 2 *3 * xp + 2;  
+
+
+   for (int i = 1; i < xp ; ++i) {
+
+   VectorXi unos_rhs = unos(VectorXi::LinSpaced(3 * xl, 1, 3 * xl).array() -1).array() + i *(3 * xp * 3 * xl + 3);
+
+    unos(VectorXi::LinSpaced(3 * xl, 3 * xl + 1 + 3 * xl * (i - 1), 3 * xl + 3 * xl * i).array() -1)
+    = unos_rhs ;
+  }
+
+
+    // Get row and column indices from linear indices
+    MatrixXi sub_indices = ind2sub(3*xp,3*r.size(), unos);
+    sub_indices = sub_indices.array() -1;
+
+     // Define the sparse matrix (5x5 example)
+    SparseMatrix<double> Txyz = spalloc(3 * xp, 3 * r.size(), unos.size()) ;
+
+      // List of triplets to hold the non-zero elements
+    vector<Triplet<double>> tripletList;
+
+    // Populate the triplet list with values
+    for (int i = 0; i < sub_indices.rows() ; ++i) {
+        tripletList.emplace_back(sub_indices(i,0), sub_indices(i,1), 1.0);  // Insert element 1 at (row_ind, col_ind)
+    }
+
+
+    // Populate the sparse matrix with the triplet list
+    Txyz.setFromTriplets(tripletList.begin(), tripletList.end());
+
+ VectorXi tres(6*xp*xl); tres.setZero();
+ start = 1;  step = 9 * 4 * xp; end = 9 * 4 * xl * xp ;
+    
+ tres(VectorXi::LinSpaced(xl,1,xl).array() -1) =  VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step);   
+
+    
+ tres(VectorXi::LinSpaced(xl,xl+1,2*xl).array() -1) =  tres(VectorXi::LinSpaced(xl,1,xl).array() -1).array() + 6 * xp + 1;
+ 
+    
+ tres(VectorXi::LinSpaced(xl,2*xl+1,3*xl).array() -1) =  tres(VectorXi::LinSpaced(xl,1,xl).array() -1).array() + 2 * 6 * xp + 2;
+
+ tres(VectorXi::LinSpaced(xl,3*xl+1,4*xl).array() -1) =  tres(VectorXi::LinSpaced(xl,1,xl).array() -1).array() + 3 * 6 * xp + 3;
+
+ tres(VectorXi::LinSpaced(xl,4*xl+1,5*xl).array() -1) =  tres(VectorXi::LinSpaced(xl,1,xl).array() -1).array() + 4 * 6 * xp + 4;
+
+ tres(VectorXi::LinSpaced(xl,5*xl+1,6*xl).array() -1) =  tres(VectorXi::LinSpaced(xl,1,xl).array() -1).array() + 5 * 6 * xp + 5;
+
+  VectorXi tres_rhs(6 * xl);
+
+   for (int i = 1; i < xp ; ++i) {
+
+   tres_rhs = tres(VectorXi::LinSpaced(6 * xl, 1, 6 * xl).array() -1).array() + i *(6 * xp * 6 * xl + 6);
+
+    tres(VectorXi::LinSpaced(6 * xl, 6*xl+1+6*xl*(i-1), 6*xl+6*xl*i).array() -1) = tres_rhs ;
+
+  }
+
+    // Get row and column indices from linear indices
+    MatrixXi sub_indices2 = ind2sub(6*xp, 6*r.size(), tres);
+    sub_indices2 = sub_indices2.array() - 1;
+
+     // Define the sparse matrix (5x5 example)
+    SparseMatrix<double> Mxyz = spalloc(6 * xp, 6 * r.size(), tres.size()) ;
+
+      // List of triplets to hold the non-zero elements
+    vector<Triplet<double>> tripletList2;
+
+    // Populate the triplet list with values
+    for (int i = 0; i < sub_indices2.rows() ; ++i) {
+        tripletList2.emplace_back(sub_indices2(i,0), sub_indices2(i,1), 1.0);  // Insert element 1 at (row_ind, col_ind)
+    }
+
+
+    // Populate the sparse matrix with the triplet list
+    Mxyz.setFromTriplets(tripletList2.begin(), tripletList2.end());
+
+// Final response vector
+
+ // Displacements
+u          = Txyz*u;
+
+ start = 1;  step = 3; end = u.size() -2 ;
+    
+MatrixXd ux  =  u(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() -1, Eigen::all);   
+
+start = 2;  step = 3; end = u.size() -1 ;
+    
+MatrixXd uy2  =  u(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() -1, Eigen::all);   
+
+start = 3;  step = 3; end = u.size() ;
+    
+MatrixXd uz2  =  u(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() -1, Eigen::all);   
+
+
+
+
 }
 
 

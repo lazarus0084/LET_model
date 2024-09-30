@@ -110,6 +110,12 @@ class Pave{
       MatrixXd XipWip;
       MatrixXd ABCD; //Layer coffecient matrix A,B,C & D
 
+       //Output Deformations
+       Eigen::VectorXd ux; 
+       Eigen::VectorXd uy; 
+       Eigen::VectorXd uz; 
+
+
        //Output Stress 
        Eigen::VectorXd sigz; 
        
