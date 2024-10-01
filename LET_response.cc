@@ -1,6 +1,6 @@
 #include "iitpave2.h"
 
-void LET_response(Pave& iitpave) {
+Pave LET_response(Pave& iitpave) {
     int N, n ;
     double H, Laml;
     VectorXd E, nu, zi, q, a(iitpave.Xl.rows()); a = 150.8 * VectorXd::Ones(iitpave.Xl.rows());   iitpave.a = a;
@@ -684,19 +684,67 @@ MatrixXd tau_rz = (4*Itr2 - Itr1).array()/3 ;
  // Displacements
 u          = Txyz*u;
 
- start = 1;  step = 3; end = u.size() -2 ;
+start = 1;  step = 3; end = u.size() -2 ;
     
-MatrixXd ux  =  u(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() -1, Eigen::all);   
+iitpave.ux  =  u(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() -1, Eigen::all);   
 
 start = 2;  step = 3; end = u.size() -1 ;
     
-MatrixXd uy2  =  u(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() -1, Eigen::all);   
+iitpave.uy  =  u(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() -1, Eigen::all);   
 
 start = 3;  step = 3; end = u.size() ;
     
-MatrixXd uz2  =  u(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() -1, Eigen::all);   
+iitpave.uz =  u(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() -1, Eigen::all);   
+
+// Stresses
+
+MatrixXd sig = -Mxyz*sigv ;     // minus inserted to fullfil inwards positive
 
 
+start = 1;  step = 6; end = sig.size() -5 ;
+    
+iitpave.sigx  =  sig(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() -1, Eigen::all);   
+
+start = 2;  step = 6; end = sig.size() -4 ;
+    
+iitpave.sigy  =  sig(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() -1, Eigen::all);   
+
+start = 3;  step = 6; end = sig.size() -3 ;
+    
+iitpave.sigz =  sig(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() -1, Eigen::all);   
+
+start = 4;  step = 6; end = sig.size() -2 ;
+    
+iitpave.sigxy =  sig(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() -1, Eigen::all);
+
+start = 5;  step = 6; end = sig.size() -1 ;
+    
+iitpave.sigyz =  sig(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() -1, Eigen::all); 
+
+start = 6;  step = 6; end = sig.size() ;
+    
+iitpave.sigxz =  sig(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() -1, Eigen::all);  
+
+// Strains
+start = 1;  step = xl; end = Ee.size() ;
+
+VectorXd Eel = Ee(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() -1); // Reduce vector to evaluation points only
+
+start = 1;  step = xl; end = Ee.size() ;
+
+VectorXd Nul = Nu(VectorXi::LinSpaced((end - start) / step + 1, start, start + ((end - start) / step) * step).array() -1); // Reduce vector to evaluation points only
+
+iitpave.epsx =  (Eel.array().inverse()).array() * (iitpave.sigx.array() - (Nul.array()*(iitpave.sigy + iitpave.sigz).array()).array()).array() ;
+
+iitpave.epsy =  (Eel.array().inverse()).array() * (iitpave.sigz.array() - (Nul.array()*(iitpave.sigx + iitpave.sigy).array()).array()).array() ;
+
+iitpave.epsxy  =(1+Nul.array()).array() * (Eel.array().inverse()).array() * iitpave.sigxy.array();
+
+iitpave.epsyz  =(1+Nul.array()).array() * (Eel.array().inverse()).array() * iitpave.sigyz.array();
+
+iitpave.epsxz  =(1+Nul.array()).array() * (Eel.array().inverse()).array() * iitpave.sigxz.array();
+
+return iitpave;
 
 
 }

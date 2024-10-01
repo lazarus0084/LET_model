@@ -45,14 +45,12 @@ iitpave.XipWip  = numint_coeff(N, n, Xp, Xl, H , a) ;  //*filename XipWip sInteg
      
 // Evaluate coefficients of integration 
 iitpave.ABCD = arb_func(E.size(),zi,E,nu,iitpave) ;
-//saveit(iitpave.ABCD);
+
 // Evaluate response 
 LET_response(iitpave);
 
-}
+//testing
+cout << iitpave.sigz << endl;
 
     
-
-
-
-
+}

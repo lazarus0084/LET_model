@@ -109,7 +109,7 @@ class Pave{
        // integration points and weights
       MatrixXd XipWip;
       MatrixXd ABCD; //Layer coffecient matrix A,B,C & D
-
+ // Response Vector
        //Output Deformations
        Eigen::VectorXd ux; 
        Eigen::VectorXd uy; 
@@ -117,12 +117,21 @@ class Pave{
 
 
        //Output Stress 
-       Eigen::VectorXd sigz; 
+       
+       Eigen::VectorXd sigx; 
+       Eigen::VectorXd sigy; 
+       Eigen::VectorXd sigz;  
+       Eigen::VectorXd sigxy; 
+       Eigen::VectorXd sigyz; 
+       Eigen::VectorXd sigxz; 
        
        //Output  Strains
        Eigen::VectorXd epsx; 
        Eigen::VectorXd epsy; 
-       Eigen::VectorXd epsz; 
+       Eigen::VectorXd epsz;
+       Eigen::VectorXd epsxy; 
+       Eigen::VectorXd epsyz; 
+       Eigen::VectorXd epsxz;  
 
        void PopulateLayers(const std::vector<Layer>& layers) {
         // Resize nu to match the size of layers
@@ -175,7 +184,7 @@ void init_LET(Pave& iitpave);
 MatrixXd numint_coeff(int N, int n, MatrixXd Xp, MatrixXd Xl, double H ,VectorXd a);
 MatrixXd besselroots(int o, int N, int k);
 MatrixXd arb_func(int n, const VectorXd& zi, const VectorXd& E, const VectorXd& nu, const Pave& iitpave);
-void LET_response(Pave& iitpave);
+Pave LET_response(Pave& iitpave);
 //*MATLAB Function prototypes*/
 MatrixXd repmat(int mat, int rows, int cols);
 MatrixXd repmat(double mat, int rows, int cols);
