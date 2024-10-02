@@ -50,7 +50,50 @@ iitpave.ABCD = arb_func(E.size(),zi,E,nu,iitpave) ;
 LET_response(iitpave);
 
 //testing
-cout << iitpave.sigz << endl;
+//cout << iitpave.sigz << endl;
+
+
+int size = iitpave.sigx.size();
+
+MatrixXd Response_Sheet(iitpave.sigx.size(), 15);
+
+Response_Sheet << iitpave.ux, iitpave.uy, iitpave.uz, iitpave.sigx, iitpave.sigy, iitpave.sigz,
+                  iitpave.sigxy, iitpave.sigyz, iitpave.sigxz, iitpave.epsx, iitpave.epsy, 
+                  iitpave.epsz, iitpave.epsxy, iitpave.epsyz, iitpave.epsxz;
+
+cout << Response_Sheet << endl;
+
+// Create and open a CSV file
+std::ofstream file("response_table.csv");
+
+// Write the header, including the new terms
+file << "Index, ux, uy, uz, sigx, sigy, sigz, sigxy, sigyz, sigxz, epsx, epsy, epsz, epsxy, epsyz, epsxz" << std::endl;
+
+// Write the data to the CSV file
+for (int i = 0; i < iitpave.sigx.size(); ++i) {
+    file << i + 1 << ", "
+         << iitpave.ux(i) << ", "
+         << iitpave.uy(i) << ", "
+         << iitpave.uz(i) << ", "
+         << iitpave.sigx(i) << ", "
+         << iitpave.sigy(i) << ", "
+         << iitpave.sigz(i) << ", "
+         << iitpave.sigxy(i) << ", "
+         << iitpave.sigyz(i) << ", "
+         << iitpave.sigxz(i) << ", "
+         << iitpave.epsx(i) << ", "
+         << iitpave.epsy(i) << ", "
+         << iitpave.epsz(i) << ", "
+         << iitpave.epsxy(i) << ", "
+         << iitpave.epsyz(i) << ", "
+         << iitpave.epsxz(i) << std::endl;
+}
+
+// Close the file
+file.close();
+
+
+    std::cout << "Response table saved to 'response_table.csv'." << std::endl;
 
     
 }

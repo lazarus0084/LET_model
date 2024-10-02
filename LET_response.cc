@@ -736,7 +736,9 @@ VectorXd Nul = Nu(VectorXi::LinSpaced((end - start) / step + 1, start, start + (
 
 iitpave.epsx =  (Eel.array().inverse()).array() * (iitpave.sigx.array() - (Nul.array()*(iitpave.sigy + iitpave.sigz).array()).array()).array() ;
 
-iitpave.epsy =  (Eel.array().inverse()).array() * (iitpave.sigz.array() - (Nul.array()*(iitpave.sigx + iitpave.sigy).array()).array()).array() ;
+iitpave.epsy =  (Eel.array().inverse()).array() * (iitpave.sigy.array() - (Nul.array()*(iitpave.sigz + iitpave.sigx).array()).array()).array() ;
+
+iitpave.epsz =  (Eel.array().inverse()).array() * (iitpave.sigz.array() - (Nul.array()*(iitpave.sigx + iitpave.sigy).array()).array()).array() ;
 
 iitpave.epsxy  =(1+Nul.array()).array() * (Eel.array().inverse()).array() * iitpave.sigxy.array();
 
