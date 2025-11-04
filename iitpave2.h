@@ -225,3 +225,4 @@ SparseMatrix<double> extractSparseSubMat(const SparseMatrix<double>& BC0,
 MatrixXd arb_func_interp(int n, const RowVectorXd& xip, const MatrixXd& ABCD);
 RowVectorXd linearInterp(const RowVectorXd& x, const RowVectorXd& y, const RowVectorXd& xi);
 MatrixXd besselj(int n, const MatrixXd& m1);
+VectorXd cumsum(const VectorXd& v);

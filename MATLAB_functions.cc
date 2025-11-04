@@ -464,3 +464,14 @@ MatrixXd besselj(int n, const MatrixXd& m1) {
 
     return result;
 }
+// Custom cumsum function for Eigen vectors
+VectorXd cumsum(const VectorXd& v) {
+    VectorXd result(v.size());
+    if (v.size() == 0) return result;
+
+    result(0) = v(0);
+    for (int i = 1; i < v.size(); ++i) {
+        result(i) = result(i - 1) + v(i);
+    }
+    return result;
+}

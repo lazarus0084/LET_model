@@ -1,6 +1,6 @@
 #!/bin/bash
 
-INPUTFILE=input2.txt
+INPUTFILE=input1.txt
 
 rm *.o iitpave2.out
 make iitpave2
