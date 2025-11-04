@@ -18,7 +18,7 @@ void init_LET(Pave& iitpave) {
     nu = iitpave.nu; //Layer Poisson's ratios
     zi = iitpave.zi; zi.conservativeResize(iitpave.zi.size()-1); // Layer interface depths (i.e. depth of layer n-1 out
                      // of n layers (layer n depth goes to infinity)
- 
+  zi = cumsum(zi);
 // -------------------------------------------------------------------------
 // References
 // -------------------------------------------------------------------------
